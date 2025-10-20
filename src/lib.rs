@@ -1,10 +1,28 @@
+use std::ops::Add;
+
 #[allow(non_camel_case_types)]
+#[derive(PartialEq, PartialOrd, Clone)]
 pub struct d64 {
-    pub hi: f64,
-    pub lo: f64
+    hi: f64,
+    lo: f64
 }
 
 pub mod arith;
+
+// Add arith::add_qq arith::add_qd
+
+impl Add for d64 {
+    type Output = d64;
+    fn add(self, b: d64) -> d64 {
+        arith::add_qq(self, b)
+    }
+}
+impl Add<f64> for d64 {
+    type Output = d64;
+    fn add(self, b: f64) -> d64 {
+        arith::add_qd(self, b)
+    }
+}
 
 // Convert to float
 impl From<d64> for f64 {

@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dev-dependencies]
-malachite = "0.7"
+rug = "1.28"
+#malachite = "0.7"

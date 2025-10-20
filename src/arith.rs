@@ -241,7 +241,7 @@ pub fn div_qq(x: d64, y: d64) -> d64
 }
 
 #[inline(always)]
-pub fn neg(x: d64) -> d64
+pub fn neg_q(x: d64) -> d64
 {
     return d64 {hi: -x.hi, lo: -x.lo};
 }
@@ -288,11 +288,62 @@ pub fn sqrt_q(a: d64) -> d64
 }
 
 #[inline]
-pub fn square(x: d64) -> d64
+pub fn square_q(x: d64) -> d64
 {
     // Simple squaring algorithm
     // Cost 7 flops
     let y = mul_dd(x.hi, x.hi);
     let y_lo = fma(x.lo + x.lo, x.hi, y.lo);
     return addfast_dd(y.hi, y_lo);
+}
+
+// UNIT TESTS
+
+#[cfg(test)]
+mod test
+{
+    use super::*;
+    use rug::Float;
+
+    const PREC: u32 = 120;
+
+    impl From<d64> for Float {
+        fn from(src: d64) -> Float {
+            let hi = Float::with_val(PREC, src.hi);
+            let lo = Float::with_val(PREC, src.lo);
+            return Float::with_val(PREC, &hi + &lo);
+        }
+    }
+
+    fn assert_close_to_ref(x: d64, y: Float, rtol: f64)
+    {
+        let xx = Float::from(x);
+        let diff = Float::with_val(PREC, &xx - &y);
+        let uthr = Float::with_val(PREC, rtol * &xx);
+        let lthr = Float::with_val(PREC, -uthr.clone());
+        if !(&diff <= &uthr && &diff >= &lthr) {
+            panic!("got {}, expected {} ({} exceeds threshold {})",
+                   &xx, &y, &diff, &uthr);
+        }
+    }
+
+    #[test]
+    fn arith_dd()
+    {
+        let ulp = 2.4651903288156619e-32;
+        let mut x = 10.0;
+        while x > 5.0 {
+            let mut y = x;
+            while y > 1e-35 {
+                let xx = Float::with_val(PREC, x);
+                let yy = Float::with_val(PREC, y);
+                let res_q = add_dd(x, y);
+                let res_x = Float::with_val(PREC, &xx + &yy);
+                assert_close_to_ref(res_q, res_x, ulp/2.0);
+                y *= 0.9383;
+            }
+            x *= 0.9933;
+        }
+    }
+
 }
