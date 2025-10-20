@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 use super::{d64, AddFast, SubFast};
-use super::arith;
+use super::{arith, round};
 use std::ops::*;
 use num_traits::*;
 
@@ -53,6 +53,7 @@ binary_op!(Add, add, arith::add_qq, arith::add_qd, arith::add_dq);
 binary_op!(Sub, sub, arith::sub_qq, arith::sub_qd, arith::sub_dq);
 binary_op!(Mul, mul, arith::mul_qq, arith::mul_qd, arith::mul_dq);
 binary_op!(Div, div, arith::div_qq, arith::div_qd, arith::div_dq);
+binary_op!(Rem, rem, round::mod_qq, round::mod_qd, round::mod_dq);
 binary_op!(AddFast, add_fast, arith::addfast_qq, arith::addfast_qd, arith::addfast_dq);
 binary_op!(SubFast, sub_fast, arith::subfast_qq, arith::subfast_qd, arith::subfast_dq);
 
@@ -84,6 +85,7 @@ inplace_op!(AddAssign, add_assign, arith::add_qq, arith::add_qd);
 inplace_op!(SubAssign, sub_assign, arith::sub_qq, arith::sub_qd);
 inplace_op!(MulAssign, mul_assign, arith::mul_qq, arith::mul_qd);
 inplace_op!(DivAssign, div_assign, arith::div_qq, arith::div_qd);
+inplace_op!(RemAssign, rem_assign, round::mod_qq, round::mod_qd);
 
 /// Macro for implementing unary operation traits
 ///

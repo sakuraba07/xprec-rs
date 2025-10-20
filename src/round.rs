@@ -76,7 +76,21 @@ pub fn mod_qq(x: d64, y: d64) -> d64
 {
     // XXX this loses an enormous amount of precision. Avoid.
     let i = trunc(div_qq(x, y));
-    return addfast_qq(x, neg_q(mul_qq(y, i)));
+    return subfast_qq(x, mul_qq(y, i));
+}
+
+pub fn mod_qd(x: d64, y: f64) -> d64
+{
+    // XXX this loses an enormous amount of precision. Avoid.
+    let i = trunc(div_qd(x, y));
+    return subfast_qq(x, mul_dq(y, i));
+}
+
+pub fn mod_dq(x: f64, y: d64) -> d64
+{
+    // XXX this loses an enormous amount of precision. Avoid.
+    let i = trunc(div_dq(x, y));
+    return subfast_dq(x, mul_qq(y, i));
 }
 
 // ---------------------------------------------------------------------------
