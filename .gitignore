@@ -1,0 +1,13 @@
+# Files for editing
+.*
+*~
+\#*\#
+!.gitignore
+!/.github/
+
+# Build
+/target
+
+# Don't commit lockfiles, but let's reevaluate maybe
+# https://blog.rust-lang.org/2023/08/29/committing-lockfiles/
+Cargo.lock
