@@ -46,6 +46,7 @@ macro_rules! binary_op
 }
 
 binary_op!(Add, add, arith::add_qq, arith::add_qd, arith::add_dq);
+binary_op!(Sub, sub, arith::sub_qq, arith::sub_qd, arith::sub_dq);
 binary_op!(Mul, mul, arith::mul_qq, arith::mul_qd, arith::mul_dq);
 binary_op!(Div, div, arith::div_qq, arith::div_qd, arith::div_dq);
 
@@ -66,6 +67,7 @@ macro_rules! inplace_op
 }
 
 inplace_op!(AddAssign, add_assign, arith::add_qq, arith::add_qd);
+inplace_op!(SubAssign, sub_assign, arith::sub_qq, arith::sub_qd);
 inplace_op!(MulAssign, mul_assign, arith::mul_qq, arith::mul_qd);
 inplace_op!(DivAssign, div_assign, arith::div_qq, arith::div_qd);
 
@@ -83,7 +85,7 @@ mod test
     {
         let x = d64::from(1.0) * 2.0;
         let y = d64::from(1.0) / 4.0;
-        assert_eq!(1.0 + x * y, d64::from(1.5));
+        assert_eq!(1.0 + x * y - 2.0, d64::from(-0.5));
     }
 
 }

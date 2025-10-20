@@ -40,6 +40,16 @@ pub fn addfast_dd(a: f64, b: f64) -> d64
 }
 
 #[inline]
+pub fn subfast_dd(a: f64, b: f64) -> d64
+{
+    // Algorithm 1 with b -> -b: cost 3 flops
+    let s = a - b;
+    let z = a - s;
+    let t = z - b;
+    return d64 {hi: s, lo: t};
+}
+
+#[inline]
 pub fn add_dd(a: f64, b: f64) -> d64
 {
     // Algorithm 2: cost 6 flops
@@ -48,6 +58,19 @@ pub fn add_dd(a: f64, b: f64) -> d64
     let bprime = s - aprime;
     let delta_a = a - aprime;
     let delta_b = b - bprime;
+    let t = delta_a + delta_b;
+    return d64 {hi: s, lo: t};
+}
+
+#[inline]
+pub fn sub_dd(a: f64, b: f64) -> d64
+{
+    // Algorithm 2: cost 6 flops
+    let s = a - b;
+    let aprime = s + b;
+    let bprime = aprime - s;
+    let delta_a = a - aprime;
+    let delta_b = bprime - b;
     let t = delta_a + delta_b;
     return d64 {hi: s, lo: t};
 }
@@ -106,10 +129,28 @@ pub fn addfast_qd(x: d64, y: f64) -> d64
 }
 
 #[inline]
+pub fn subfast_qd(x: d64, y: f64) -> d64
+{
+    // Algorithm 4 modified: cost 7 flops, error 2 u^2
+    let s = subfast_dd(x.hi, y);
+    let v = x.lo + s.lo;
+    return addfast_dd(s.hi, v);
+}
+
+#[inline]
 pub fn add_qd(x: d64, y: f64) -> d64
 {
     // Algorithm 4: cost 10 flops, error 2 u^2
     let s = add_dd(x.hi, y);
+    let v = x.lo + s.lo;
+    return addfast_dd(s.hi, v);
+}
+
+#[inline]
+pub fn sub_qd(x: d64, y: f64) -> d64
+{
+    // Algorithm 4: cost 10 flops, error 2 u^2
+    let s = sub_dd(x.hi, y);
     let v = x.lo + s.lo;
     return addfast_dd(s.hi, v);
 }
@@ -178,10 +219,25 @@ pub fn addfast_dq(x: f64, y: d64) -> d64
     return addfast_dd(s.hi, v);
 }
 
+#[inline]
+pub fn subfast_dq(x: f64, y: d64) -> d64
+{
+    // Algorithm 4 modified: cost 7 flops, error 2 u^2
+    let s = subfast_dd(x, y.hi);
+    let v = s.lo - y.lo;
+    return addfast_dd(s.hi, v);
+}
+
 #[inline(always)]
 pub fn add_dq(x: f64, y: d64) -> d64
 {
     return add_qd(y, x);
+}
+
+#[inline(always)]
+pub fn sub_dq(x: f64, y: d64) -> d64
+{
+    return add_qd(neg_q(y), x);
 }
 
 #[inline(always)]
@@ -212,11 +268,35 @@ pub fn addfast_qq(x: d64, y: d64) -> d64
 }
 
 #[inline]
+pub fn subfast_qq(x: d64, y: d64) -> d64
+{
+    // Algorithm 6: cost 17 flops, error 3 u^2 + 13 u^3
+    let s = subfast_dd(x.hi, y.hi);
+    let t = sub_dd(x.lo, y.lo);
+    let c = s.lo + t.hi;
+    let v = addfast_dd(s.hi, c);
+    let w = t.lo + v.lo;
+    return addfast_dd(v.hi, w);
+}
+
+#[inline]
 pub fn add_qq(x: d64, y: d64) -> d64
 {
     // Algorithm 6: cost 20 flops, error 3 u^2 + 13 u^3
     let s = add_dd(x.hi, y.hi);
     let t = add_dd(x.lo, y.lo);
+    let c = s.lo + t.hi;
+    let v = addfast_dd(s.hi, c);
+    let w = t.lo + v.lo;
+    return addfast_dd(v.hi, w);
+}
+
+#[inline]
+pub fn sub_qq(x: d64, y: d64) -> d64
+{
+    // Algorithm 6: cost 20 flops, error 3 u^2 + 13 u^3
+    let s = sub_dd(x.hi, y.hi);
+    let t = sub_dd(x.lo, y.lo);
     let c = s.lo + t.hi;
     let v = addfast_dd(s.hi, c);
     let w = t.lo + v.lo;
@@ -315,18 +395,25 @@ mod test
             while y > 1e-35 {
                 // fast addition
                 check_binary(addfast_dd, |x, y| x + y, x, y, 0.1);
-
-                // fast subtraction
                 check_binary(addfast_dd, |x, y| x + y, -x, y, 0.1);
                 check_binary(addfast_dd, |x, y| x + y, x, -y, 0.1);
+
+                // fast subtraction
+                check_binary(subfast_dd, |x, y| x - y, x, y, 0.1);
+                check_binary(subfast_dd, |x, y| x - y, -x, y, 0.1);
+                check_binary(subfast_dd, |x, y| x - y, x, -y, 0.1);
 
                 // addition
                 check_binary(add_dd, |x, y| x + y, x, y, 0.1);
                 check_binary(add_dd, |x, y| x + y, y, x, 0.1);
-
-                // subtraction
                 check_binary(add_dd, |x, y| x + y, x, -y, 0.1);
                 check_binary(add_dd, |x, y| x + y, y, -x, 0.1);
+
+                // subtraction
+                check_binary(sub_dd, |x, y| x - y, x, y, 0.1);
+                check_binary(sub_dd, |x, y| x - y, y, x, 0.1);
+                check_binary(sub_dd, |x, y| x - y, x, -y, 0.1);
+                check_binary(sub_dd, |x, y| x - y, y, -x, 0.1);
 
                 // multiplication
                 check_binary(mul_dd, |x, y| x * y, x, y, 0.1);
@@ -361,17 +448,35 @@ mod test
                 check_binary(addfast_dq, |x, y| x + y, -x.hi, y, 1.6);
                 check_binary(addfast_dq, |x, y| x + y, -x.hi, neg_q(y), 1.6);
 
+                // fast subtraction
+                check_binary(subfast_qd, |x, y| x - y, x, y.hi, 1.6);
+                check_binary(subfast_qd, |x, y| x - y, x, -y.hi, 1.6);
+                check_binary(subfast_qd, |x, y| x - y, neg_q(x), y.hi, 1.6);
+                check_binary(subfast_qd, |x, y| x - y, neg_q(x), -y.hi, 1.6);
+                check_binary(subfast_dq, |x, y| x - y, x.hi, y, 1.6);
+                check_binary(subfast_dq, |x, y| x - y, x.hi, neg_q(y), 1.6);
+                check_binary(subfast_dq, |x, y| x - y, -x.hi, y, 1.6);
+                check_binary(subfast_dq, |x, y| x - y, -x.hi, neg_q(y), 1.6);
+
                 // addition
                 check_binary(add_qd, |x, y| x + y, x, y.hi, 1.6);
                 check_binary(add_qd, |x, y| x + y, y, x.hi, 1.6);
                 check_binary(add_dq, |x, y| x + y, x.hi, y, 1.6);
                 check_binary(add_dq, |x, y| x + y, y.hi, x, 1.6);
-
-                // subtraction
                 check_binary(add_qd, |x, y| x + y, x, -y.hi, 1.6);
                 check_binary(add_qd, |x, y| x + y, y, -x.hi, 1.6);
                 check_binary(add_dq, |x, y| x + y, x.hi, neg_q(y), 1.6);
                 check_binary(add_dq, |x, y| x + y, y.hi, neg_q(x), 1.6);
+
+                // subtraction
+                check_binary(sub_qd, |x, y| x - y, x, y.hi, 1.6);
+                check_binary(sub_qd, |x, y| x - y, y, x.hi, 1.6);
+                check_binary(sub_dq, |x, y| x - y, x.hi, y, 1.6);
+                check_binary(sub_dq, |x, y| x - y, y.hi, x, 1.6);
+                check_binary(sub_qd, |x, y| x - y, x, -y.hi, 1.6);
+                check_binary(sub_qd, |x, y| x - y, y, -x.hi, 1.6);
+                check_binary(sub_dq, |x, y| x - y, x.hi, neg_q(y), 1.6);
+                check_binary(sub_dq, |x, y| x - y, y.hi, neg_q(x), 1.6);
 
                 // multiplication
                 check_binary(mul_qd, |x, y| x * y, x, y.hi, 2.0);
@@ -407,13 +512,22 @@ mod test
                 check_binary(addfast_qq, |x, y| x + y, x, neg_q(y), 1.6);
                 check_binary(addfast_qq, |x, y| x + y, neg_q(x), y, 1.6);
 
+                // fast subtraction
+                check_binary(subfast_qq, |x, y| x - y, x, y, 1.6);
+                check_binary(subfast_qq, |x, y| x - y, x, neg_q(y), 1.6);
+                check_binary(subfast_qq, |x, y| x - y, neg_q(x), y, 1.6);
+
                 // addition
                 check_binary(add_qq, |x, y| x + y, x, y, 1.6);
                 check_binary(add_qq, |x, y| x + y, y, x, 1.6);
-
-                // subtraction
                 check_binary(add_qq, |x, y| x + y, x, neg_q(y), 1.6);
                 check_binary(add_qq, |x, y| x + y, y, neg_q(x), 1.6);
+
+                // subtraction
+                check_binary(sub_qq, |x, y| x - y, x, y, 1.6);
+                check_binary(sub_qq, |x, y| x - y, y, x, 1.6);
+                check_binary(sub_qq, |x, y| x - y, x, neg_q(y), 1.6);
+                check_binary(sub_qq, |x, y| x - y, y, neg_q(x), 1.6);
 
                 // multiplication
                 check_binary(mul_qq, |x, y| x * y, x, y, 2.0);
