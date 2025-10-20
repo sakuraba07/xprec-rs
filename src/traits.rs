@@ -68,3 +68,22 @@ macro_rules! inplace_op
 inplace_op!(AddAssign, add_assign, arith::add_qq, arith::add_qd);
 inplace_op!(MulAssign, mul_assign, arith::mul_qq, arith::mul_qd);
 inplace_op!(DivAssign, div_assign, arith::div_qq, arith::div_qd);
+
+
+// ---------------------------------------------------------------------------
+// UNIT TESTS
+
+#[cfg(test)]
+mod test
+{
+    use super::*;
+
+    #[test]
+    fn test_traits()
+    {
+        let x = d64::from(1.0) * 2.0;
+        let y = d64::from(1.0) / 4.0;
+        assert_eq!(1.0 + x * y, d64::from(1.5));
+    }
+
+}

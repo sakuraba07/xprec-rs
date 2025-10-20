@@ -1,5 +1,5 @@
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
 pub struct d64 {
     hi: f64,
     lo: f64
