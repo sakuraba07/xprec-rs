@@ -11,6 +11,7 @@ pub struct d64 {
 mod test_utils;
 
 pub mod arith;
+pub mod round;
 
 // Add arith::add_qq arith::add_qd
 
