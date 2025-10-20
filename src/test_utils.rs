@@ -48,8 +48,14 @@ where
     if !(&diff <= &thr) {
         // Recompute xx
         let xx = Float::with_val(PREC, x);
-        panic!("f({}) ~= {}, got {} (diff. {} > {})",
-                &xx, &zz_ref, &zz, &diff, &thr);
+        let reldiff = Float::with_val(PREC, &diff / &zz);
+        let ulpsdiff = Float::to_f64(&reldiff) / EPSILON;
+        panic!(
+            "f({})\n\t\
+             should be   = {}\n\t\
+             instead was = {}\n\t\
+             deviation   = {:.3} ulps (exceeds threshold of {:.3} ulps)",
+            &xx, &zz_ref, &zz, ulpsdiff, ulps);
     }
 }
 
@@ -86,7 +92,13 @@ where
         // Recompute xx and yy
         let xx = Float::with_val(PREC, x);
         let yy = Float::with_val(PREC, y);
-        panic!("f({}, {}) ~= {}, got {} (diff. {} > {})",
-                &xx, &yy, &zz_ref, &zz, &diff, &thr);
+        let reldiff = Float::with_val(PREC, &diff / &zz);
+        let ulpsdiff = Float::to_f64(&reldiff) / EPSILON;
+        panic!(
+            "f({}, {})\n\t\
+             should be   = {}\n\t\
+             instead was = {}\n\t\
+             deviation   = {:.3} ulps (exceeds threshold of {:.3} ulps)",
+            &xx, &yy, &zz_ref, &zz, &ulpsdiff, &ulps);
     }
 }
