@@ -72,6 +72,13 @@ pub fn round(x: d64) -> d64
     return trunc(add_qd(x, nudge));
 }
 
+pub fn mod_qq(x: d64, y: d64) -> d64
+{
+    // XXX this loses an enormous amount of precision. Avoid.
+    let i = trunc(div_qq(x, y));
+    return addfast_qq(x, neg_q(mul_qq(y, i)));
+}
+
 // ---------------------------------------------------------------------------
 // UNIT TESTS
 
