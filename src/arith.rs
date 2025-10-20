@@ -272,7 +272,7 @@ pub fn sqrt_q(a: d64) -> d64
     // all the special-case handling, which is why we defer to it in these
     // cases.
     let y0 = a.hi.sqrt();
-    if is_positive_normal(a.hi) {
+    if !is_positive_normal(a.hi) {
         return d64::from(y0);
     }
 
@@ -307,32 +307,19 @@ mod test
     use super::super::test_utils::*;
 
     #[test]
-    fn test_arith_dd_fast()
-    {
-        let mut x = 8.0;
-        while x > 4.0 {
-            let mut y = x;
-            while y > 1e-36 {
-                // addition
-                check_binary(addfast_dd, |x, y| x + y, x, y, 0.1);
-
-               // subtraction
-                check_binary(addfast_dd, |x, y| x + y, -x, y, 0.1);
-                check_binary(addfast_dd, |x, y| x + y, x, -y, 0.1);
-
-                y *= 0.9375;
-            }
-            x *= 0.9933;
-        }
-    }
-
-    #[test]
     fn test_arith_dd()
     {
         let mut x = 10.0;
         while x > 5.0 {
             let mut y = x;
             while y > 1e-35 {
+                // fast addition
+                check_binary(addfast_dd, |x, y| x + y, x, y, 0.1);
+
+                // fast subtraction
+                check_binary(addfast_dd, |x, y| x + y, -x, y, 0.1);
+                check_binary(addfast_dd, |x, y| x + y, x, -y, 0.1);
+
                 // addition
                 check_binary(add_dd, |x, y| x + y, x, y, 0.1);
                 check_binary(add_dd, |x, y| x + y, y, x, 0.1);
@@ -358,18 +345,131 @@ mod test
     }
 
     #[test]
-    fn test_sqrt_d()
+    fn test_arith_qd()
+    {
+        let mut x = d64::from(10.0);
+        while x > d64::from(5.0) {
+            let mut y = x;
+            while y > d64::from(1e-35) {
+                // fast addition
+                check_binary(addfast_qd, |x, y| x + y, x, y.hi, 1.6);
+                check_binary(addfast_qd, |x, y| x + y, x, -y.hi, 1.6);
+                check_binary(addfast_qd, |x, y| x + y, neg_q(x), y.hi, 1.6);
+                check_binary(addfast_qd, |x, y| x + y, neg_q(x), -y.hi, 1.6);
+                check_binary(addfast_dq, |x, y| x + y, x.hi, y, 1.6);
+                check_binary(addfast_dq, |x, y| x + y, x.hi, neg_q(y), 1.6);
+                check_binary(addfast_dq, |x, y| x + y, -x.hi, y, 1.6);
+                check_binary(addfast_dq, |x, y| x + y, -x.hi, neg_q(y), 1.6);
+
+                // addition
+                check_binary(add_qd, |x, y| x + y, x, y.hi, 1.6);
+                check_binary(add_qd, |x, y| x + y, y, x.hi, 1.6);
+                check_binary(add_dq, |x, y| x + y, x.hi, y, 1.6);
+                check_binary(add_dq, |x, y| x + y, y.hi, x, 1.6);
+
+                // subtraction
+                check_binary(add_qd, |x, y| x + y, x, -y.hi, 1.6);
+                check_binary(add_qd, |x, y| x + y, y, -x.hi, 1.6);
+                check_binary(add_dq, |x, y| x + y, x.hi, neg_q(y), 1.6);
+                check_binary(add_dq, |x, y| x + y, y.hi, neg_q(x), 1.6);
+
+                // multiplication
+                check_binary(mul_qd, |x, y| x * y, x, y.hi, 2.0);
+                check_binary(mul_qd, |x, y| x * y, x, -y.hi, 2.0);
+                check_binary(mul_qd, |x, y| x * y, y, x.hi, 2.0);
+                check_binary(mul_qd, |x, y| x * y, y, -x.hi, 2.0);
+
+                // division
+                check_binary(div_qd, |x, y| x / y, x, y.hi, 3.0);
+                check_binary(div_qd, |x, y| x / y, x, -y.hi, 3.0);
+                check_binary(div_qd, |x, y| x / y, y, x.hi, 3.0);
+                check_binary(div_qd, |x, y| x / y, y, -x.hi, 3.0);
+                check_binary(div_dq, |x, y| x / y, x.hi, y, 3.0);
+                check_binary(div_dq, |x, y| x / y, x.hi, neg_q(y), 3.0);
+                check_binary(div_dq, |x, y| x / y, y.hi, x, 3.0);
+                check_binary(div_dq, |x, y| x / y, y.hi, neg_q(x), 3.0);
+
+                y = mul_qd(y,0.9383);
+            }
+            x = mul_qd(x, 0.9933);
+        }
+    }
+
+    #[test]
+    fn test_arith_qq()
+    {
+        let mut x = d64::from(10.0);
+        while x > d64::from(5.0) {
+            let mut y = x;
+            while y > d64::from(1e-35) {
+                // fast addition
+                check_binary(addfast_qq, |x, y| x + y, x, y, 1.6);
+                check_binary(addfast_qq, |x, y| x + y, x, neg_q(y), 1.6);
+                check_binary(addfast_qq, |x, y| x + y, neg_q(x), y, 1.6);
+
+                // addition
+                check_binary(add_qq, |x, y| x + y, x, y, 1.6);
+                check_binary(add_qq, |x, y| x + y, y, x, 1.6);
+
+                // subtraction
+                check_binary(add_qq, |x, y| x + y, x, neg_q(y), 1.6);
+                check_binary(add_qq, |x, y| x + y, y, neg_q(x), 1.6);
+
+                // multiplication
+                check_binary(mul_qq, |x, y| x * y, x, y, 2.0);
+                check_binary(mul_qq, |x, y| x * y, x, neg_q(y), 2.0);
+
+                // division
+                check_binary(div_qq, |x, y| x / y, x, y, 3.0);
+                check_binary(div_qq, |x, y| x / y, neg_q(x), y, 3.0);
+                check_binary(div_qq, |x, y| y / x, y, x, 3.0);
+                check_binary(div_qq, |x, y| -y / x, neg_q(y), x, 3.0);
+
+                y = mul_qd(y,0.9383);
+            }
+            x = mul_qd(x, 0.9933);
+        }
+    }
+
+    #[test]
+    fn test_arith_d()
     {
         let mut x = 1.0;
         while x > 1e-290 {
             check_unary(sqrt_d, |x| x.sqrt(), x, 2.0);
+            check_unary(reciprocal_d, |x| 1.0 / x, x, 1.0);
             x *= 0.992;
         }
 
         x = 1.0;
         while x < 1e300 {
             check_unary(sqrt_d, |x| x.sqrt(), x, 2.0);
+            if x < 1e290 {
+                check_unary(reciprocal_d, |x| 1.0 / x, x, 1.0);
+            }
             x /= 0.992;
+        }
+    }
+
+    #[test]
+    fn test_arith_q()
+    {
+        let mut x = d64::from(1.0);
+        while x > d64::from(1e-290) {
+            check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
+            check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
+            check_unary(reciprocal_q, |x| 1.0 / x, x, 1.0);
+            x = mul_qd(x, 0.992);
+        }
+
+        x = d64::from(1.0);
+        while x < d64::from(1e300) {
+            check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
+            check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
+            if x < d64::from(1e290) {
+                check_unary(reciprocal_q, |x| 1.0 / x, x, 1.0);
+            }
+            x = div_qd(x, 0.992);
         }
     }
 

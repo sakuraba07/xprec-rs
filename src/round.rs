@@ -14,7 +14,7 @@ pub fn ceil(x: d64) -> d64
     // sign
     let hi = x.hi.ceil();
     if hi != x.hi {
-        return d64 {hi: hi, lo: 0.0};
+        return d64::from(hi);
     }
 
     // hi is an integer, so modify lo instead.  This may actually increase the
@@ -31,7 +31,7 @@ pub fn floor(x: d64) -> d64
     // sign
     let hi = x.hi.floor();
     if hi != x.hi {
-        return d64 {hi: hi, lo: 0.0};
+        return d64::from(hi);
     }
 
     // hi is an integer, so modify lo instead.  This may actually increase the
@@ -48,7 +48,7 @@ pub fn trunc(x: d64) -> d64
     // signs.
     let hi = x.hi.trunc();
     if hi != x.hi {
-        return d64 {hi: hi, lo: 0.0};
+        return d64::from(hi);
     }
 
     // hi is an integer, so modify lo instead.  Here, one needs to be careful
@@ -70,4 +70,64 @@ pub fn round(x: d64) -> d64
     // trunc is fast, so it makes sense to use this as a building block.
     let nudge = (0.5_f64).copysign(x.hi);
     return trunc(add_qd(x, nudge));
+}
+
+// ---------------------------------------------------------------------------
+// UNIT TESTS
+
+#[cfg(test)]
+mod test
+{
+    use super::*;
+
+    #[test]
+    fn test_trunc()
+    {
+        let u = 2e-32;
+
+        assert!(trunc(d64 {hi: 0.0, lo: 0.0}) == d64::from(0.0));
+        assert!(trunc(d64 {hi: 2.5, lo: u/4.0}) == d64::from(2.0));
+        assert!(trunc(d64 {hi: -2.3, lo: u/4.0}) == d64::from(-2.0));
+
+        assert!(trunc(d64 {hi: 2.0, lo: u/2.0}) == d64::from(2.0));
+        assert!(trunc(d64 {hi: 2.0, lo: -u/2.0}) == d64::from(1.0));
+        assert!(trunc(d64 {hi: -2.0, lo: u/2.0}) == d64::from(-1.0));
+        assert!(trunc(d64 {hi: -2.0, lo: -u/2.0}) == d64::from(-2.0));
+    }
+
+    #[test]
+    fn test_ceil()
+    {
+        let u = 2e-32;
+
+        assert!(ceil(d64 {hi: 0.0, lo: 0.0}) == d64::from(0.0));
+        assert!(ceil(d64 {hi: 2.5, lo: u/4.0}) == d64::from(3.0));
+        assert!(ceil(d64 {hi: -2.3, lo: u/4.0}) == d64::from(-2.0));
+
+        assert!(ceil(d64 {hi: 2.0, lo: u/2.0}) == d64::from(3.0));
+        assert!(ceil(d64 {hi: 2.0, lo: -u/2.0}) == d64::from(2.0));
+        assert!(ceil(d64 {hi: -2.0, lo: u/2.0}) == d64::from(-1.0));
+        assert!(ceil(d64 {hi: -2.0, lo: -u/2.0}) == d64::from(-2.0));
+    }
+
+    #[test]
+    fn test_round()
+    {
+        let u = 2e-32;
+
+        assert!(round(d64 {hi: 0.0, lo: 0.0}) == d64::from(0.0));
+        assert!(round(d64 {hi: 2.5, lo: u/4.0}) == d64::from(3.0));
+        assert!(round(d64 {hi: 2.5, lo: 0.0}) == d64::from(3.0));
+        assert!(round(d64 {hi: 2.5, lo: -u/3.0}) == d64::from(2.0));
+        assert!(round(d64 {hi: -2.3, lo: u/4.0}) == d64::from(-2.0));
+        assert!(round(d64 {hi: -2.5, lo: 0.0}) == d64::from(-3.0));
+        assert!(round(d64 {hi: -2.5, lo: u/4.0}) == d64::from(-2.0));
+        assert!(round(d64 {hi: -2.5, lo: -u/4.0}) == d64::from(-3.0));
+
+        assert!(round(d64 {hi: 2.0, lo: u/2.0}) == d64::from(2.0));
+        assert!(round(d64 {hi: 2.0, lo: -u/2.0}) == d64::from(2.0));
+        assert!(round(d64 {hi: -2.0, lo: u/2.0}) == d64::from(-2.0));
+        assert!(round(d64 {hi: -2.0, lo: -u/2.0}) == d64::from(-2.0));
+    }
+
 }
