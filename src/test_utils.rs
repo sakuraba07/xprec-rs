@@ -1,0 +1,58 @@
+use super::d64;
+use rug;
+use rug::Float;
+use core::cmp::Ordering;
+use rug::float::Round;
+use rug::ops::AssignRound;
+use rug::Assign;
+
+const PREC: u32 = 120;
+
+impl AssignRound<d64> for Float {
+    type Round = Round;
+    type Ordering = Ordering;
+    fn assign_round(&mut self, src: d64, _round: Round) -> Ordering {
+        let (hi, _hdir) = Float::with_val_round(PREC, src.hi, _round);
+        let (lo, _ldir) = Float::with_val_round(PREC, src.lo, _round);
+        *self = hi + lo;
+        Ordering::Equal
+    }
+}
+
+/// Checks the result of a binary function against a multiprecision result
+///
+///  * `f`     - function to be tested, called as `f(x, y)`
+///  * `fref`  - expression on multifloats which produces the reference
+///  * `x`     - first argument
+///  * `y`     - second argument
+///  * `ulps`  - relative tolerance in the result as multiples of epsilon
+///
+pub fn check_binary<A: Copy, B: Copy>(
+        f: fn(A, B) -> d64, fref: fn(Float, Float) -> Float,
+        x: A, y: B, ulps: f64)
+where
+    Float: Assign<f64>,
+    Float: Assign<A>,
+    Float: Assign<B>,
+{
+    const EPSILON: f64 = 2.4651903288156619e-32;
+
+    // Compute result to check
+    let z = f(x, y);
+    let zz = Float::with_val(PREC, z);
+
+    // Compute reference result
+    let xx = Float::with_val(PREC, x);
+    let yy = Float::with_val(PREC, y);
+    let zz_ref = fref(xx, yy);
+
+    let diff = Float::with_val(PREC, &zz - &zz_ref);
+    let thr = Float::with_val(PREC, EPSILON * ulps * zz.clone().abs());
+    if !(&diff <= &thr) {
+        // Recompute xx and yy
+        let xx = Float::with_val(PREC, x);
+        let yy = Float::with_val(PREC, y);
+        panic!("f({}, {}) ~= {}, got {} (diff. {} > {})",
+                &xx, &yy, &zz_ref, &zz, &diff, &thr);
+    }
+}

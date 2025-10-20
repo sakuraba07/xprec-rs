@@ -303,78 +303,32 @@ pub fn square_q(x: d64) -> d64
 mod test
 {
     use super::*;
-    use rug::Float;
-    use core::cmp::Ordering;
-    use rug::float::Round;
-    use rug::ops::AssignRound;
-    use rug::Assign;
-
-    const PREC: u32 = 120;
-
-    impl AssignRound<d64> for Float {
-        type Round = Round;
-        type Ordering = Ordering;
-        fn assign_round(&mut self, src: d64, _round: Round) -> Ordering {
-            let (hi, _hdir) = Float::with_val_round(PREC, src.hi, _round);
-            let (lo, _ldir) = Float::with_val_round(PREC, src.lo, _round);
-            *self = hi + lo;
-            Ordering::Equal
-        }
-    }
-
-    fn check_binary<A: Copy, B: Copy>(
-            f: fn(A, B) -> d64, fref: fn(Float, Float) -> Float,
-            x: A, y: B, rtol: f64)
-    where
-        Float: Assign<f64>,
-        Float: Assign<A>,
-        Float: Assign<B>,
-    {
-        // Compute result to check
-        let z = f(x, y);
-        let zz = Float::with_val(PREC, z);
-
-        // Compute reference result
-        let xx = Float::with_val(PREC, x);
-        let yy = Float::with_val(PREC, y);
-        let zz_ref = fref(xx, yy);
-
-        let diff = Float::with_val(PREC, &zz - &zz_ref);
-        let thr = Float::with_val(PREC, rtol * zz.clone().abs());
-        if !(&diff <= &thr) {
-            // Recompute xx and yy
-            let xx = Float::with_val(PREC, x);
-            let yy = Float::with_val(PREC, y);
-            panic!("f({}, {}) ~= {}, got {} (diff. {} > {})",
-                   &xx, &yy, &zz_ref, &zz, &diff, &thr);
-        }
-    }
+    use super::super::test_utils::check_binary;
 
     #[test]
     fn arith_dd()
     {
-        let ulp = 2.4651903288156619e-32;
         let mut x = 10.0;
         while x > 5.0 {
             let mut y = x;
             while y > 1e-35 {
                 // addition
-                check_binary(add_dd, |x, y| x + y, x, y, 0.1 * ulp);
-                check_binary(add_dd, |x, y| x + y, y, x, 0.1 * ulp);
+                check_binary(add_dd, |x, y| x + y, x, y, 0.1);
+                check_binary(add_dd, |x, y| x + y, y, x, 0.1);
 
                 // subtraction
-                check_binary(add_dd, |x, y| x + y, x, -y, 0.1 * ulp);
-                check_binary(add_dd, |x, y| x + y, y, -x, 0.1 * ulp);
+                check_binary(add_dd, |x, y| x + y, x, -y, 0.1);
+                check_binary(add_dd, |x, y| x + y, y, -x, 0.1);
 
                 // multiplication
-                check_binary(mul_dd, |x, y| x * y, x, y, 0.1 * ulp);
-                check_binary(mul_dd, |x, y| x * y, x, -y, 0.1 * ulp);
+                check_binary(mul_dd, |x, y| x * y, x, y, 0.1);
+                check_binary(mul_dd, |x, y| x * y, x, -y, 0.1);
 
                 // division
-                check_binary(div_dd, |x, y| x / y, x, y, 1.0 * ulp);
-                check_binary(div_dd, |x, y| x / y, -x, y, 1.0 * ulp);
-                check_binary(div_dd, |x, y| y / x, y, x, 1.0 * ulp);
-                check_binary(div_dd, |x, y| -y / x, -y, x, 1.0 * ulp);
+                check_binary(div_dd, |x, y| x / y, x, y, 1.0);
+                check_binary(div_dd, |x, y| x / y, -x, y, 1.0);
+                check_binary(div_dd, |x, y| y / x, y, x, 1.0);
+                check_binary(div_dd, |x, y| -y / x, -y, x, 1.0);
 
                 y *= 0.9383;
             }

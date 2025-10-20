@@ -7,6 +7,9 @@ pub struct d64 {
     lo: f64
 }
 
+#[cfg(test)]
+mod test_utils;
+
 pub mod arith;
 
 // Add arith::add_qq arith::add_qd
