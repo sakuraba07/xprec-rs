@@ -323,12 +323,12 @@ mod test
     }
 
     fn check_binary<A: Copy, B: Copy>(
-            f: fn(A, B) -> d64, fref: fn(&Float, &Float) -> Float,
+            f: fn(A, B) -> d64, fref: fn(Float, Float) -> Float,
             x: A, y: B, rtol: f64)
     where
         Float: Assign<f64>,
         Float: Assign<A>,
-        Float: Assign<B>
+        Float: Assign<B>,
     {
         // Compute result to check
         let z = f(x, y);
@@ -337,12 +337,17 @@ mod test
         // Compute reference result
         let xx = Float::with_val(PREC, x);
         let yy = Float::with_val(PREC, y);
-        let zz_ref = fref(&xx, &yy);
+        let zz_ref = fref(xx, yy);
 
         let diff = Float::with_val(PREC, &zz - &zz_ref);
         let thr = Float::with_val(PREC, rtol * zz.clone().abs());
-        assert!(&diff <= &thr, "f({}, {}) ~= {}, got {} (diff. {} > {})",
-                &xx, &yy, &zz_ref, &zz, &diff, &thr);
+        if !(&diff <= &thr) {
+            // Recompute xx and yy
+            let xx = Float::with_val(PREC, x);
+            let yy = Float::with_val(PREC, y);
+            panic!("f({}, {}) ~= {}, got {} (diff. {} > {})",
+                   &xx, &yy, &zz_ref, &zz, &diff, &thr);
+        }
     }
 
     #[test]
@@ -354,44 +359,22 @@ mod test
             let mut y = x;
             while y > 1e-35 {
                 // addition
-                check_binary(
-                        |x, y| add_dd(x, y),
-                        |x, y| Float::with_val(PREC, x + y),
-                        x, y, 0.1 * ulp);
-                check_binary(
-                        |x, y| add_dd(y, x),
-                        |x, y| Float::with_val(PREC, x + y),
-                        x, y, 0.1 * ulp);
+                check_binary(add_dd, |x, y| x + y, x, y, 0.1 * ulp);
+                check_binary(add_dd, |x, y| x + y, y, x, 0.1 * ulp);
 
                 // subtraction
-                check_binary(
-                        |x, y| add_dd(x, -y),
-                        |x, y| Float::with_val(PREC, x - y),
-                        x, y, 0.1 * ulp);
-                check_binary(
-                        |x, y| add_dd(y, -x),
-                        |x, y| Float::with_val(PREC, y - x),
-                        x, y, 0.1 * ulp);
+                check_binary(add_dd, |x, y| x + y, x, -y, 0.1 * ulp);
+                check_binary(add_dd, |x, y| x + y, y, -x, 0.1 * ulp);
 
                 // multiplication
-                check_binary(
-                        |x, y| mul_dd(x, y),
-                        |x, y| Float::with_val(PREC, x * y),
-                        x, y, 0.1 * ulp);
-                check_binary(
-                        |x, y| mul_dd(y, x),
-                        |x, y| Float::with_val(PREC, y * x),
-                        x, y, 0.1 * ulp);
+                check_binary(mul_dd, |x, y| x * y, x, y, 0.1 * ulp);
+                check_binary(mul_dd, |x, y| x * y, x, -y, 0.1 * ulp);
 
                 // division
-                check_binary(
-                        |x, y| div_dd(x, y),
-                        |x, y| Float::with_val(PREC, x / y),
-                        x, y, ulp);
-                check_binary(
-                        |x, y| div_dd(y, x),
-                        |x, y| Float::with_val(PREC, y / x),
-                        x, y, ulp);
+                check_binary(div_dd, |x, y| x / y, x, y, 1.0 * ulp);
+                check_binary(div_dd, |x, y| x / y, -x, y, 1.0 * ulp);
+                check_binary(div_dd, |x, y| y / x, y, x, 1.0 * ulp);
+                check_binary(div_dd, |x, y| -y / x, -y, x, 1.0 * ulp);
 
                 y *= 0.9383;
             }
