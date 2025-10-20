@@ -3,6 +3,9 @@ name = "xprec"
 version = "0.1.0"
 edition = "2024"
 
+[dependencies]
+num-traits = "0.2"
+simba = "0.9"  # unsure
+
 [dev-dependencies]
 rug = "1.28"
-#malachite = "0.7"

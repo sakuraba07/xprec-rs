@@ -6,6 +6,10 @@
 use super::{d64, AddFast, SubFast};
 use super::arith;
 use std::ops::*;
+use num_traits::*;
+
+// ---------------------------------------------------------------------------
+// STANDARD TRAITS
 
 /// Macro for implementing binary operation traits
 ///
@@ -52,7 +56,14 @@ binary_op!(Div, div, arith::div_qq, arith::div_qd, arith::div_dq);
 binary_op!(AddFast, add_fast, arith::addfast_qq, arith::addfast_qd, arith::addfast_dq);
 binary_op!(SubFast, sub_fast, arith::subfast_qq, arith::subfast_qd, arith::subfast_dq);
 
-
+/// Macro for implementing in-place operation traits
+///
+/// Implements traits `Trait` for a inplace operation `func` for the following
+/// combination of types
+///
+///   - `$op_qq: fn(d64, d64) -> d64` ... `$Trait for d64`
+///   - `$op_qd: fn(d64, f64) -> d64` ... `$Trait<f64> for d64`
+///
 macro_rules! inplace_op
 {
     ($Trait:ident, $func:ident, $op_qq:expr, $op_qd:expr) => {
@@ -74,6 +85,48 @@ inplace_op!(SubAssign, sub_assign, arith::sub_qq, arith::sub_qd);
 inplace_op!(MulAssign, mul_assign, arith::mul_qq, arith::mul_qd);
 inplace_op!(DivAssign, div_assign, arith::div_qq, arith::div_qd);
 
+/// Macro for implementing unary operation traits
+///
+/// Implements traits `Trait` for a inplace operation `func` for the following
+/// type:
+///
+///   - `$op_q: fn(d64) -> d64` ... `$Trait for d64`
+///
+macro_rules! unary_op
+{
+    ($Trait:ident, $func:ident, $op_q:expr) => {
+        impl $Trait for d64 {
+            type Output = d64;
+            fn $func(self) -> d64 {
+                return $op_q(self);
+            }
+        }
+    }
+}
+
+unary_op!(Neg, neg, arith::neg_q);
+
+
+// ---------------------------------------------------------------------------
+// NUMERIC TRAITS
+
+impl Zero for d64 {
+    fn zero() -> d64 {
+        return d64 {hi: 0.0, lo: 0.0};
+    }
+    fn is_zero(&self) -> bool {
+        return self.hi == 0.0;
+    }
+}
+
+impl One for d64 {
+    fn one() -> d64 {
+        return d64 {hi: 1.0, lo: 0.0};
+    }
+    fn is_one(&self) -> bool {
+        return self.hi == 1.0 && self.lo == 0.0;
+    }
+}
 
 // ---------------------------------------------------------------------------
 // UNIT TESTS
