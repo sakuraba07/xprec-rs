@@ -304,26 +304,49 @@ mod test
 {
     use super::*;
     use rug::Float;
+    use core::cmp::Ordering;
+    use rug::float::Round;
+    use rug::ops::AssignRound;
 
-    const PREC: u32 = 120;
-
+    const PREC: u32 = 140;
+/*
     impl From<d64> for Float {
         fn from(src: d64) -> Float {
             let hi = Float::with_val(PREC, src.hi);
             let lo = Float::with_val(PREC, src.lo);
             return Float::with_val(PREC, &hi + &lo);
         }
+    }*/
+
+    impl AssignRound<d64> for Float {
+        type Round = Round;
+        type Ordering = Ordering;
+        fn assign_round(&mut self, src: d64, _round: Round) -> Ordering {
+            let (hi, _hdir) = Float::with_val_round(PREC, src.hi, _round);
+            let (lo, _ldir) = Float::with_val_round(PREC, src.lo, _round);
+            *self = hi + lo;
+            Ordering::Equal
+        }
     }
 
-    fn assert_close_to_ref(x: d64, y: Float, rtol: f64)
+    fn check_binary_dd(
+            f: fn(f64, f64) -> d64, fref: fn(&Float, &Float) -> Float,
+            x: f64, y: f64, rtol: f64)
     {
-        let xx = Float::from(x);
-        let diff = Float::with_val(PREC, &xx - &y);
-        let uthr = Float::with_val(PREC, rtol * &xx);
-        let lthr = Float::with_val(PREC, -uthr.clone());
-        if !(&diff <= &uthr && &diff >= &lthr) {
-            panic!("got {}, expected {} ({} exceeds threshold {})",
-                   &xx, &y, &diff, &uthr);
+        // Compute result to check
+        let z = f(x, y);
+        let zz = Float::with_val(PREC, z);
+
+        // Compute reference result
+        let xx = Float::with_val(PREC, x);
+        let yy = Float::with_val(PREC, y);
+        let zz_ref = fref(&xx, &yy);
+
+        let diff = Float::with_val(PREC, &zz - &zz_ref);
+        let thr = Float::with_val(PREC, rtol * zz.clone().abs());
+        if !(&diff <= &thr.clone().abs()) {
+            panic!("f({}, {}) ~= {}, got {} (diff. {} > {})",
+                   &xx, &yy, &zz_ref, &zz, &diff, &thr);
         }
     }
 
@@ -335,11 +358,10 @@ mod test
         while x > 5.0 {
             let mut y = x;
             while y > 1e-35 {
-                let xx = Float::with_val(PREC, x);
-                let yy = Float::with_val(PREC, y);
-                let res_q = add_dd(x, y);
-                let res_x = Float::with_val(PREC, &xx + &yy);
-                assert_close_to_ref(res_q, res_x, ulp/2.0);
+                check_binary_dd(
+                    add_dd, |x, y| Float::with_val(PREC, x + y),
+                    x, y, ulp / 2.0);
+
                 y *= 0.9383;
             }
             x *= 0.9933;

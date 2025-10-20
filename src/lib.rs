@@ -1,7 +1,7 @@
 use std::ops::Add;
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, PartialOrd, Clone)]
+#[derive(PartialEq, PartialOrd, Clone, Copy)]
 pub struct d64 {
     hi: f64,
     lo: f64
