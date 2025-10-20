@@ -3,7 +3,7 @@
  * Copyright (C) 2023-2025 Markus Wallerberger and others
  * SPDX-License-Identifier: MIT
  */
-use super::d64;
+use super::{d64, AddFast, SubFast};
 use super::arith;
 use std::ops::*;
 
@@ -49,6 +49,9 @@ binary_op!(Add, add, arith::add_qq, arith::add_qd, arith::add_dq);
 binary_op!(Sub, sub, arith::sub_qq, arith::sub_qd, arith::sub_dq);
 binary_op!(Mul, mul, arith::mul_qq, arith::mul_qd, arith::mul_dq);
 binary_op!(Div, div, arith::div_qq, arith::div_qd, arith::div_dq);
+binary_op!(AddFast, add_fast, arith::addfast_qq, arith::addfast_qd, arith::addfast_dq);
+binary_op!(SubFast, sub_fast, arith::subfast_qq, arith::subfast_qd, arith::subfast_dq);
+
 
 macro_rules! inplace_op
 {

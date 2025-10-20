@@ -5,6 +5,20 @@ pub struct d64 {
     lo: f64
 }
 
+pub trait AddFast<T = Self> {
+    type Output;
+
+    // XXX: should maybe be unsafe?
+    fn add_fast(self, small: T) -> Self::Output;
+}
+
+pub trait SubFast<T = Self> {
+    type Output;
+
+    // XXX: should maybe be unsafe?
+    fn sub_fast(self, small: T) -> Self::Output;
+}
+
 #[cfg(test)]
 mod test_utils;
 
