@@ -307,16 +307,9 @@ mod test
     use core::cmp::Ordering;
     use rug::float::Round;
     use rug::ops::AssignRound;
+    use rug::Assign;
 
-    const PREC: u32 = 140;
-/*
-    impl From<d64> for Float {
-        fn from(src: d64) -> Float {
-            let hi = Float::with_val(PREC, src.hi);
-            let lo = Float::with_val(PREC, src.lo);
-            return Float::with_val(PREC, &hi + &lo);
-        }
-    }*/
+    const PREC: u32 = 120;
 
     impl AssignRound<d64> for Float {
         type Round = Round;
@@ -329,9 +322,13 @@ mod test
         }
     }
 
-    fn check_dd(
-            f: fn(f64, f64) -> d64, fref: fn(&Float, &Float) -> Float,
-            x: f64, y: f64, rtol: f64)
+    fn check_binary<A: Copy, B: Copy>(
+            f: fn(A, B) -> d64, fref: fn(&Float, &Float) -> Float,
+            x: A, y: B, rtol: f64)
+    where
+        Float: Assign<f64>,
+        Float: Assign<A>,
+        Float: Assign<B>
     {
         // Compute result to check
         let z = f(x, y);
@@ -357,36 +354,44 @@ mod test
             let mut y = x;
             while y > 1e-35 {
                 // addition
-                check_dd(|x, y| add_dd(x, y),
-                         |x, y| Float::with_val(PREC, x + y),
-                         x, y, 0.1 * ulp);
-                check_dd(|x, y| add_dd(y, x),
-                         |x, y| Float::with_val(PREC, x + y),
-                         x, y, 0.1 * ulp);
+                check_binary(
+                        |x, y| add_dd(x, y),
+                        |x, y| Float::with_val(PREC, x + y),
+                        x, y, 0.1 * ulp);
+                check_binary(
+                        |x, y| add_dd(y, x),
+                        |x, y| Float::with_val(PREC, x + y),
+                        x, y, 0.1 * ulp);
 
                 // subtraction
-                check_dd(|x, y| add_dd(x, -y),
-                         |x, y| Float::with_val(PREC, x - y),
-                         x, y, 0.1 * ulp);
-                check_dd(|x, y| add_dd(y, -x),
-                         |x, y| Float::with_val(PREC, y - x),
-                         x, y, 0.1 * ulp);
+                check_binary(
+                        |x, y| add_dd(x, -y),
+                        |x, y| Float::with_val(PREC, x - y),
+                        x, y, 0.1 * ulp);
+                check_binary(
+                        |x, y| add_dd(y, -x),
+                        |x, y| Float::with_val(PREC, y - x),
+                        x, y, 0.1 * ulp);
 
                 // multiplication
-                check_dd(|x, y| mul_dd(x, y),
-                         |x, y| Float::with_val(PREC, x * y),
-                         x, y, 0.1 * ulp);
-                check_dd(|x, y| mul_dd(y, x),
-                         |x, y| Float::with_val(PREC, y * x),
-                         x, y, 0.1 * ulp);
+                check_binary(
+                        |x, y| mul_dd(x, y),
+                        |x, y| Float::with_val(PREC, x * y),
+                        x, y, 0.1 * ulp);
+                check_binary(
+                        |x, y| mul_dd(y, x),
+                        |x, y| Float::with_val(PREC, y * x),
+                        x, y, 0.1 * ulp);
 
                 // division
-                check_dd(|x, y| div_dd(x, y),
-                         |x, y| Float::with_val(PREC, x / y),
-                         x, y, ulp);
-                check_dd(|x, y| div_dd(y, x),
-                         |x, y| Float::with_val(PREC, y / x),
-                         x, y, ulp);
+                check_binary(
+                        |x, y| div_dd(x, y),
+                        |x, y| Float::with_val(PREC, x / y),
+                        x, y, ulp);
+                check_binary(
+                        |x, y| div_dd(y, x),
+                        |x, y| Float::with_val(PREC, y / x),
+                        x, y, ulp);
 
                 y *= 0.9383;
             }
