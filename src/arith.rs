@@ -329,7 +329,7 @@ mod test
         }
     }
 
-    fn check_binary_dd(
+    fn check_dd(
             f: fn(f64, f64) -> d64, fref: fn(&Float, &Float) -> Float,
             x: f64, y: f64, rtol: f64)
     {
@@ -344,10 +344,8 @@ mod test
 
         let diff = Float::with_val(PREC, &zz - &zz_ref);
         let thr = Float::with_val(PREC, rtol * zz.clone().abs());
-        if !(&diff <= &thr.clone().abs()) {
-            panic!("f({}, {}) ~= {}, got {} (diff. {} > {})",
-                   &xx, &yy, &zz_ref, &zz, &diff, &thr);
-        }
+        assert!(&diff <= &thr, "f({}, {}) ~= {}, got {} (diff. {} > {})",
+                &xx, &yy, &zz_ref, &zz, &diff, &thr);
     }
 
     #[test]
@@ -358,9 +356,37 @@ mod test
         while x > 5.0 {
             let mut y = x;
             while y > 1e-35 {
-                check_binary_dd(
-                    add_dd, |x, y| Float::with_val(PREC, x + y),
-                    x, y, ulp / 2.0);
+                // addition
+                check_dd(|x, y| add_dd(x, y),
+                         |x, y| Float::with_val(PREC, x + y),
+                         x, y, 0.1 * ulp);
+                check_dd(|x, y| add_dd(y, x),
+                         |x, y| Float::with_val(PREC, x + y),
+                         x, y, 0.1 * ulp);
+
+                // subtraction
+                check_dd(|x, y| add_dd(x, -y),
+                         |x, y| Float::with_val(PREC, x - y),
+                         x, y, 0.1 * ulp);
+                check_dd(|x, y| add_dd(y, -x),
+                         |x, y| Float::with_val(PREC, y - x),
+                         x, y, 0.1 * ulp);
+
+                // multiplication
+                check_dd(|x, y| mul_dd(x, y),
+                         |x, y| Float::with_val(PREC, x * y),
+                         x, y, 0.1 * ulp);
+                check_dd(|x, y| mul_dd(y, x),
+                         |x, y| Float::with_val(PREC, y * x),
+                         x, y, 0.1 * ulp);
+
+                // division
+                check_dd(|x, y| div_dd(x, y),
+                         |x, y| Float::with_val(PREC, x / y),
+                         x, y, ulp);
+                check_dd(|x, y| div_dd(y, x),
+                         |x, y| Float::with_val(PREC, y / x),
+                         x, y, ulp);
 
                 y *= 0.9383;
             }
