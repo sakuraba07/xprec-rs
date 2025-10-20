@@ -19,6 +19,40 @@ impl AssignRound<d64> for Float {
     }
 }
 
+/// Checks the result of a unary function against a multiprecision result
+///
+///  * `f`     - function to be tested, called as `f(x)`
+///  * `fref`  - expression on multifloats which produces the reference
+///  * `x`     - argument
+///  * `ulps`  - relative tolerance in the result as multiples of epsilon
+///
+pub fn check_unary<A: Copy>(
+        f: fn(A) -> d64, fref: fn(Float) -> Float,
+        x: A, ulps: f64)
+where
+    Float: Assign<f64>,
+    Float: Assign<A>
+{
+    const EPSILON: f64 = 2.4651903288156619e-32;
+
+    // Compute result to check
+    let z = f(x);
+    let zz = Float::with_val(PREC, z);
+
+    // Compute reference result
+    let xx = Float::with_val(PREC, x);
+    let zz_ref = fref(xx);
+
+    let diff = Float::with_val(PREC, &zz - &zz_ref);
+    let thr = Float::with_val(PREC, EPSILON * ulps * zz.clone().abs());
+    if !(&diff <= &thr) {
+        // Recompute xx
+        let xx = Float::with_val(PREC, x);
+        panic!("f({}) ~= {}, got {} (diff. {} > {})",
+                &xx, &zz_ref, &zz, &diff, &thr);
+    }
+}
+
 /// Checks the result of a binary function against a multiprecision result
 ///
 ///  * `f`     - function to be tested, called as `f(x, y)`

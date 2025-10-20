@@ -297,16 +297,37 @@ pub fn square_q(x: d64) -> d64
     return addfast_dd(y.hi, y_lo);
 }
 
+// ---------------------------------------------------------------------------
 // UNIT TESTS
 
 #[cfg(test)]
 mod test
 {
     use super::*;
-    use super::super::test_utils::check_binary;
+    use super::super::test_utils::*;
 
     #[test]
-    fn arith_dd()
+    fn test_arith_dd_fast()
+    {
+        let mut x = 8.0;
+        while x > 4.0 {
+            let mut y = x;
+            while y > 1e-36 {
+                // addition
+                check_binary(addfast_dd, |x, y| x + y, x, y, 0.1);
+
+               // subtraction
+                check_binary(addfast_dd, |x, y| x + y, -x, y, 0.1);
+                check_binary(addfast_dd, |x, y| x + y, x, -y, 0.1);
+
+                y *= 0.9375;
+            }
+            x *= 0.9933;
+        }
+    }
+
+    #[test]
+    fn test_arith_dd()
     {
         let mut x = 10.0;
         while x > 5.0 {
@@ -333,6 +354,22 @@ mod test
                 y *= 0.9383;
             }
             x *= 0.9933;
+        }
+    }
+
+    #[test]
+    fn test_sqrt_d()
+    {
+        let mut x = 1.0;
+        while x > 1e-290 {
+            check_unary(sqrt_d, |x| x.sqrt(), x, 2.0);
+            x *= 0.992;
+        }
+
+        x = 1.0;
+        while x < 1e300 {
+            check_unary(sqrt_d, |x| x.sqrt(), x, 2.0);
+            x /= 0.992;
         }
     }
 

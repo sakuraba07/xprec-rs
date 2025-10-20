@@ -40,17 +40,3 @@ impl From<f64> for d64 {
         d64 {hi: src, lo: 0.0}
     }
 }
-
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = d64::from(4.0);
-        assert_eq!(f64::from(result), 4.0);
-    }
-}
-
