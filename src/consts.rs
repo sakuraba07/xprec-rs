@@ -1,4 +1,5 @@
 use super::d64;
+use super::checks;
 use std::num::FpCategory;
 
 impl d64 {
@@ -51,6 +52,22 @@ impl d64 {
     pub const MIN_POSITIVE: d64 = d64 {
         hi: f64::MIN_POSITIVE / f64::EPSILON, lo: 0.0
     };
+
+    /// The radix or base of the internal representation.
+    pub const RADIX: u32 = f64::RADIX;
+
+    /// Maximum exponent.
+    ///
+    /// Largest exponent `e` such that for any `m.abs() < 1`, `ldexp(m, e)` is
+    /// a normal number, i.e., does not overflow.
+    pub const MAX_EXP: i32 = f64::MAX_EXP;
+
+    /// Minimum exponent.
+    ///
+    /// Smallest exponent `e` such that for any `m.abs() < 1`, `ldexp(m, e)` is
+    /// a normal number, i.e., does not underflow or go into the subnormals.
+    pub const MIN_EXP: i32 = f64::MIN_EXP + f64::MANTISSA_DIGITS as i32 - 2;
+
 }
 
 #[inline]
@@ -125,10 +142,18 @@ mod test
         check_class((1.0 + d64::EPSILON) * d64::MIN, FpCategory::Infinite);
         check_class((1.0 + d64::EPSILON/8.0) * d64::MIN, FpCategory::Normal);
 
+        // Check min exp
+        check_class(checks::ldexp(d64::from(1.1), d64::MIN_EXP), FpCategory::Normal);
+        check_class(checks::ldexp(d64::from(0.9), d64::MIN_EXP), FpCategory::Subnormal);
+
         // Check max
         check_class(d64::MAX, FpCategory::Normal);
         check_class((1.0 + d64::EPSILON) * d64::MAX, FpCategory::Infinite);
         check_class((1.0 + d64::EPSILON/8.0) * d64::MAX, FpCategory::Normal);
+
+        // Check max exp
+        check_class(checks::ldexp(d64::from(0.9), d64::MAX_EXP), FpCategory::Normal);
+        check_class(checks::ldexp(d64::from(1.0), d64::MAX_EXP), FpCategory::Infinite);
 
         // Check min positive
         check_class(d64::MIN_POSITIVE, FpCategory::Normal);
