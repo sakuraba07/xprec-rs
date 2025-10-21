@@ -45,9 +45,10 @@ where
 
     let diff = Float::with_val(PREC, &zz - &zz_ref);
     let thr = Float::with_val(PREC, EPSILON * ulps * zz.clone().abs());
-    if !(&diff <= &thr) {
+    if !(&diff.abs() <= &thr) {
         // Recompute xx
         let xx = Float::with_val(PREC, x);
+        let diff = Float::with_val(PREC, &zz - &zz_ref);
         let reldiff = Float::with_val(PREC, &diff / &zz);
         let ulpsdiff = Float::to_f64(&reldiff) / EPSILON;
         panic!(
@@ -88,10 +89,11 @@ where
 
     let diff = Float::with_val(PREC, &zz - &zz_ref);
     let thr = Float::with_val(PREC, EPSILON * ulps * zz.clone().abs());
-    if !(&diff <= &thr) {
+    if !(&diff.abs() <= &thr) {
         // Recompute xx and yy
         let xx = Float::with_val(PREC, x);
         let yy = Float::with_val(PREC, y);
+        let diff = Float::with_val(PREC, &zz - &zz_ref);
         let reldiff = Float::with_val(PREC, &diff / &zz);
         let ulpsdiff = Float::to_f64(&reldiff) / EPSILON;
         panic!(

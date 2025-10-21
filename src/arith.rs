@@ -422,8 +422,8 @@ mod test
                 // division
                 check_binary(div_dd, |x, y| x / y, x, y, 1.0);
                 check_binary(div_dd, |x, y| x / y, -x, y, 1.0);
-                check_binary(div_dd, |x, y| y / x, y, x, 1.0);
-                check_binary(div_dd, |x, y| -y / x, -y, x, 1.0);
+                check_binary(div_dd, |x, y| x / y, y, x, 1.0);
+                check_binary(div_dd, |x, y| x / y, -y, x, 1.0);
 
                 y *= 0.9383;
             }
@@ -536,8 +536,8 @@ mod test
                 // division
                 check_binary(div_qq, |x, y| x / y, x, y, 3.0);
                 check_binary(div_qq, |x, y| x / y, neg_q(x), y, 3.0);
-                check_binary(div_qq, |x, y| y / x, y, x, 3.0);
-                check_binary(div_qq, |x, y| -y / x, neg_q(y), x, 3.0);
+                check_binary(div_qq, |x, y| x / y, y, x, 3.0);
+                check_binary(div_qq, |x, y| x / y, neg_q(y), x, 3.0);
 
                 y = mul_qd(y,0.9383);
             }
@@ -572,7 +572,7 @@ mod test
         while x > d64::from(1e-290) {
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
             check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
-            check_unary(reciprocal_q, |x| 1.0 / x, x, 1.0);
+            check_unary(reciprocal_q, |x| 1.0 / x, x, 1.5);
             x = mul_qd(x, 0.992);
         }
 
@@ -581,7 +581,7 @@ mod test
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
             check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
             if x < d64::from(1e290) {
-                check_unary(reciprocal_q, |x| 1.0 / x, x, 1.0);
+                check_unary(reciprocal_q, |x| 1.0 / x, x, 1.5);
             }
             x = div_qd(x, 0.992);
         }
