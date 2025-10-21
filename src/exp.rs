@@ -10,17 +10,12 @@ pub fn exp(x: d64) -> d64 {
 
 pub fn exp_scaled(x: d64, p: i32) -> d64
 {
-    // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
-    // argument x modulo α, i.e.:
-    //
-    //     x = k * α + y
-    //
-    let (k, y) = reduce_mod_alpha(x);
+    // The value of MAX.ln().
+    const LOG_MAX: f64 = 709.782712893384;
 
     // Now we perform checks for special values. Using not <= instead of >
     // also catches NaNs.
-    let max_alpha = (128 * 1024 - p) as f64;
-    if !(k.abs() <= max_alpha) {
+    if !(x.hi.abs() < LOG_MAX) {
         if is_nan(x) {
             return x;
         } else if x.hi > 0.0 {
@@ -29,6 +24,13 @@ pub fn exp_scaled(x: d64, p: i32) -> d64
             return d64::from(0.0);
         }
     }
+
+    // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
+    // argument x modulo α, i.e.:
+    //
+    //     x = k * α + y
+    //
+    let (k, y) = reduce_mod_alpha(x);
 
     // We further split k = 128 * m + n, where `n` is between {0, ..., 127}
     // Then we have that:
@@ -44,17 +46,12 @@ pub fn exp_scaled(x: d64, p: i32) -> d64
 
 pub fn expm1(x: d64) -> d64
 {
-    // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
-    // argument x modulo α, i.e.:
-    //
-    //     x = k * α + y
-    //
-    let (k, y) = reduce_mod_alpha(x);
+    // The value of MAX.ln().
+    const LOG_MAX: f64 = 709.782712893384;
 
     // Now we perform checks for special values. Using not <= instead of >
     // also catches NaNs.
-    let max_alpha = (128 * 1024) as f64;
-    if !(k.abs() <= max_alpha) {
+    if !(x.hi.abs() < LOG_MAX) {
         if is_nan(x) {
             return x;
         } else if x.hi > 0.0 {
@@ -63,6 +60,13 @@ pub fn expm1(x: d64) -> d64
             return d64::from(-1.0);
         }
     }
+
+    // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
+    // argument x modulo α, i.e.:
+    //
+    //     x = k * α + y
+    //
+    let (k, y) = reduce_mod_alpha(x);
 
     // We further split k = 128 * m + n, where `n` is between {0, ..., 127}
     // Then we have that:
