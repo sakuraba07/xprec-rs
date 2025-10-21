@@ -33,7 +33,7 @@ where
     Float: Assign<f64>,
     Float: Assign<A>
 {
-    const EPSILON: f64 = 2.4651903288156619e-32;
+    const EPSILON: f64 = d64::EPSILON.hi;
 
     // Compute result to check
     let z = f(x);
@@ -75,7 +75,7 @@ where
     Float: Assign<A>,
     Float: Assign<B>,
 {
-    const EPSILON: f64 = 2.4651903288156619e-32;
+    const EPSILON: f64 = d64::EPSILON.hi;
 
     // Compute result to check
     let z = f(x, y);
