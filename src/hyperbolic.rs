@@ -2,6 +2,7 @@ use super::d64;
 use super::arith::*;
 use super::checks::*;
 use super::consts::*;
+use super::roots::*;
 use super::exp::*;
 
 pub const COSH_MAX: f64 = 710.4758600739439;
@@ -94,6 +95,74 @@ pub fn tanh(x: d64) -> d64
     let y = expm1(xx);
     let z = y * (2.0 + y);
     return copysign(z / (2.0 + z), x);
+}
+
+pub fn asinh(x: d64) -> d64
+{
+    // Special values: +Inf, -Inf are all preserved
+    if !is_finite(x) {
+        return x;
+    }
+
+    // For small values, use Taylor expansion around the double result,
+    // because the bottom expression is log(1 + 2x/3 + ...), subject to
+    // cancellation.
+    if x.hi.abs() < 1.0 {
+        let y0 = x.hi.asinh();
+        let x0 = sinh(d64::from(y0));
+
+        let delta_y = (x - x0) * inv_sqrt(1.0 + square_q(x0));
+        return addfast_dq(y0, delta_y)
+    }
+
+    // Use the definition:
+    //
+    //     asinh(x) = log(sqrt(1 + x^2) + x)
+    //
+    let xx = abs(x);
+    let arg = addfast_qq(hypot(d64::from(1.0), xx), xx);
+    return copysign(log(arg), x);
+}
+
+pub fn acosh(x: d64) -> d64
+{
+    // Special values: +Inf, -Inf are all preserved
+    if !is_finite(x) {
+        return x;
+    }
+
+    // Use the definition:
+    //
+    //     acosh(x) = log(x + sqrt(x^2 - 1))
+    //
+    // but be careful of overflows.
+    let arg = if x.hi < 1.0 / f64::EPSILON {
+        addfast_qq(x, sqrt_q(subfast_qd(square_q(x), 1.0)))
+    } else {
+        mul_pow2(x, 2.0)
+    };
+    return log(arg);
+}
+
+pub fn atanh(x: d64) -> d64
+{
+    if is_nan(x) {
+        return x;
+    }
+
+    // Special value
+    let xx = abs(x);
+    if xx == d64::from(1.0) {
+        return copysign(d64::INFINITY, x);
+    }
+
+    // Use the definition, but be wary of cancellation around 0.
+    //
+    //   atanh(x) = 1/2 log((1 + x)/(1 - x)) = 1/2 log(1 + 2x/(1 - x))
+    //
+    let twox = mul_pow2(xx, 2.0);
+    let one_minus_x = subfast_dq(1.0, xx);
+    return copysign(mul_pow2(log1p(twox / one_minus_x), 0.5), x);
 }
 
 #[cfg(test)]
@@ -191,6 +260,32 @@ mod test{
             check_unary(tanh, |x| x.tanh(), x, 2.0);
             check_unary(tanh, |x| x.tanh(), -x, 2.0);
             x *= 1.0041;
+        }
+    }
+
+        #[test]
+    fn test_arc()
+    {
+        // small values
+        let mut x = d64::from(1.0);
+        while x.hi > 1e-290 {
+            check_unary(asinh, |x| x.asinh(), x, 2.0);
+            check_unary(asinh, |x| x.asinh(), -x, 2.0);
+            if x < d64::from(1.0) {
+                check_unary(atanh, |x| x.atanh(), x, 2.5);
+                check_unary(atanh, |x| x.atanh(), -x, 2.5);
+            }
+            x *= 0.91;
+        }
+
+        // large values
+        // XXX not entire range covered
+        x = d64::from(1.0);
+        while x.hi < f64::MAX / 4.0 {
+            check_unary(asinh, |x| x.asinh(), x, 2.0);
+            check_unary(asinh, |x| x.asinh(), -x, 2.0);
+            check_unary(acosh, |x| x.acosh(), x, 2.0);
+            x *= 1.13;
         }
     }
 }
