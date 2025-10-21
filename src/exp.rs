@@ -5,7 +5,7 @@ use super::checks;
 use libm::ldexp;
 
 // The value of MAX.ln().
-const LOG_MAX: f64 = 709.782712893384;
+pub const LOG_MAX: f64 = 709.782712893384;
 
 /// Exponential function `exp(x)`
 pub fn exp(x: d64) -> d64

@@ -35,6 +35,7 @@ pub mod arith;
 pub mod checks;
 pub mod consts;
 pub mod exp;
+pub mod hyperbolic;
 pub mod roots;
 pub mod round;
 pub mod traits;
