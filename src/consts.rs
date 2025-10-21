@@ -1,5 +1,4 @@
 use super::d64;
-use super::checks;
 use std::num::FpCategory;
 
 impl d64 {
@@ -120,6 +119,7 @@ pub fn classify(x: d64) -> FpCategory
 mod test
 {
     use super::*;
+    use super::super::checks;
 
     fn check_class(x: d64, cat: FpCategory) {
         assert!(is_normal(x) == (cat == FpCategory::Normal));

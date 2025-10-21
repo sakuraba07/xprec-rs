@@ -16,9 +16,9 @@ pub fn hypot(x: d64, y: d64) -> d64
             if x_magn.is_infinite() {
                 return d64::INFINITY;
             }
-            mul_pow2(_hypot(x * SMALL, y * SMALL), LARGE)
+            mul_pow2(_hypot(mul_pow2(x, SMALL), mul_pow2(y, SMALL)), LARGE)
         } else if x_magn < SMALL {
-            mul_pow2(_hypot(x * LARGE, y * LARGE), SMALL)
+            mul_pow2(_hypot(mul_pow2(x, LARGE), mul_pow2(y, LARGE)), SMALL)
         } else {
             _hypot(x, y)
         }
@@ -27,9 +27,9 @@ pub fn hypot(x: d64, y: d64) -> d64
             if y_magn.is_infinite() {
                 return d64::INFINITY;
             }
-            mul_pow2(_hypot(y * SMALL, x * SMALL), LARGE)
+            mul_pow2(_hypot(mul_pow2(y, SMALL), mul_pow2(x, SMALL)), LARGE)
         } else if y_magn < SMALL {
-            mul_pow2(_hypot(y * LARGE, x * LARGE), SMALL)
+            mul_pow2(_hypot(mul_pow2(y, LARGE), mul_pow2(x, LARGE)), SMALL)
         } else {
             _hypot(y, x)
         }
