@@ -3,12 +3,7 @@ use super::arith::*;
 use super::consts::*;
 use libm::ldexp;
 
-#[inline(always)]
-pub fn exp(x: d64) -> d64 {
-    exp_scaled(x, 0)
-}
-
-pub fn exp_scaled(x: d64, p: i32) -> d64
+pub fn exp(x: d64) -> d64
 {
     // The value of MAX.ln().
     const LOG_MAX: f64 = 709.782712893384;
@@ -25,21 +20,9 @@ pub fn exp_scaled(x: d64, p: i32) -> d64
         }
     }
 
-    // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
-    // argument x modulo α, i.e.:
-    //
-    //     x = k * α + y
-    //
-    let (k, y) = reduce_mod_alpha(x);
-
-    // We further split k = 128 * m + n, where `n` is between {0, ..., 127}
-    // Then we have that:
-    //
-    //     exp(x) = ldexp(1, m) * exp(n * ALPHA + y)
-    //
-    let (m, n) = reduce_mod_128(k as i32);
-    let exp_m = ldexp(1.0, m + p);
-    let exp_y = addfast_dq(1.0, expm1_small(n, y));
+    let (m, expm1_y) = expm1_split(x);
+    let exp_m = ldexp(1.0, m);
+    let exp_y = addfast_dq(1.0, expm1_y);
     let exp_x = mul_pow2(exp_y, exp_m);
     return exp_x;
 }
@@ -61,6 +44,24 @@ pub fn expm1(x: d64) -> d64
         }
     }
 
+    let (m, expm1_y) = expm1_split(x);
+
+    // If m == 0, then it means we can and should use the expm1 kernel
+    // directly, otherwise it is okay to simply subtract 1.0
+    if m == 0 {
+        return expm1_y;
+    } else {
+        let exp_m = ldexp(1.0, m);
+        let exp_y = addfast_dq(1.0, expm1_y);
+        let exp_x = mul_pow2(exp_y, exp_m);
+
+        // XXX dispatch based on magnitude
+        return exp_x - 1.0;
+    }
+}
+
+pub fn expm1_split(x: d64) -> (i32, d64)
+{
     // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
     // argument x modulo α, i.e.:
     //
@@ -75,18 +76,9 @@ pub fn expm1(x: d64) -> d64
     //
     let (m, n) = reduce_mod_128(k as i32);
 
-    // If m == 0, then it means we can and should use the expm1 kernel
-    // directly, otherwise it is okay to simply subtract 1.0
-    if m == 0 {
-        return expm1_small(n, y);
-    } else {
-        let exp_m = ldexp(1.0, m);
-        let exp_y = addfast_dq(1.0, expm1_small(n, y));
-        let exp_x = mul_pow2(exp_y, exp_m);
-
-        // XXX dispatch based on magnitude
-        return exp_x - 1.0;
-    }
+    // Now compute expm1 for the small argument to full precision
+    let expm1_y = expm1_small(n, y);
+    return (m, expm1_y);
 }
 
 pub fn log(x: d64) -> d64
@@ -441,10 +433,6 @@ mod test {
             }
             x *= 1.0041;
         }
-
-        // scaled
-        check_unary(|x| exp_scaled(x, -3), |x| x.exp() / 8.0, d64::from(14.0), 1.0);
-        check_unary(|x| exp_scaled(x, 2), |x| x.exp() * 4.0, d64::from(7.5), 1.0);
     }
 
     #[test]
