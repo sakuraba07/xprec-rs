@@ -3,11 +3,11 @@ use super::arith::*;
 use super::consts::*;
 use libm::ldexp;
 
+// The value of MAX.ln().
+const LOG_MAX: f64 = 709.782712893384;
+
 pub fn exp(x: d64) -> d64
 {
-    // The value of MAX.ln().
-    const LOG_MAX: f64 = 709.782712893384;
-
     // Now we perform checks for special values. Using not <= instead of >
     // also catches NaNs.
     if !(x.hi.abs() < LOG_MAX) {
@@ -426,13 +426,16 @@ mod test {
 
         // large values
         x = d64::from(0.25);
-        while x.hi < 708.0 {
+        while x.hi < LOG_MAX {
             check_unary(exp, |x| x.exp(), x, 1.0);
             if x.hi < 670.0 {
                 check_unary(exp, |x| x.exp(), -x, 1.0);
             }
             x *= 1.0041;
         }
+
+        check_unary(exp, |x| x.exp(), d64::from(LOG_MAX), 1.0);
+        assert!(is_infinite(exp(d64::from((1.0 + f64::EPSILON) * LOG_MAX))));
     }
 
     #[test]
@@ -460,7 +463,7 @@ mod test {
 
         // large values
         x = d64::from(0.5);
-        while x.hi < 708.0 {
+        while x.hi < LOG_MAX {
             check_unary(expm1, |x| x.exp_m1(), x, 1.0);
             if x.hi < 670.0 {
                 check_unary(expm1, |x| x.exp_m1(), -x, 1.0);
