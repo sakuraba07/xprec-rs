@@ -497,4 +497,34 @@ mod test {
             x *= 1.13;
         }
     }
+
+    #[test]
+    fn test_log1p()
+    {
+        // special values
+        assert!(is_infinite(log1p(d64::INFINITY)));
+        assert!(is_infinite(log1p(d64::from(-1.0))));
+        assert!(is_nan(log1p(d64::from(-1.1))));
+        assert!(is_nan(log1p(d64::NEG_INFINITY)));
+        assert!(is_nan(log1p(d64::NAN)));
+
+        // simple vals
+        check_unary(log1p, |x| x.ln_1p(), d64::from(0.0), 0.0);
+        check_unary(log1p, |x| x.ln_1p(), d64::from(1.0), 1.5);
+
+        // small values
+        let mut x = d64::from(0.99);
+        while x.hi > 1e-290 {
+            check_unary(log1p, |x| x.ln_1p(), x, 1.5);
+            check_unary(log1p, |x| x.ln_1p(), -x, 1.5);
+            x *= 0.947;
+        }
+
+        // large values
+        x = d64::from(1.0);
+        while x.hi < 1e300 {
+            check_unary(log1p, |x| x.ln_1p(), x, 1.0);
+            x *= 1.13;
+        }
+    }
 }
