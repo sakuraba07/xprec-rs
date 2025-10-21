@@ -6,6 +6,7 @@ use libm::ldexp;
 // The value of MAX.ln().
 const LOG_MAX: f64 = 709.782712893384;
 
+/// Exponential function `exp(x)`
 pub fn exp(x: d64) -> d64
 {
     // Now we perform checks for special values. Using not <= instead of >
@@ -20,13 +21,14 @@ pub fn exp(x: d64) -> d64
         }
     }
 
-    let (m, expm1_y) = expm1_split(x);
+    let (m, expm1_y) = exp_split(x);
     let exp_m = ldexp(1.0, m);
     let exp_y = addfast_dq(1.0, expm1_y);
     let exp_x = mul_pow2(exp_y, exp_m);
     return exp_x;
 }
 
+/// Shifted exponential function `exp(x) - 1` without intermediate rounding
 pub fn expm1(x: d64) -> d64
 {
     // The value of MAX.ln().
@@ -44,7 +46,7 @@ pub fn expm1(x: d64) -> d64
         }
     }
 
-    let (m, expm1_y) = expm1_split(x);
+    let (m, expm1_y) = exp_split(x);
 
     // If m == 0, then it means we can and should use the expm1 kernel
     // directly, otherwise it is okay to simply subtract 1.0
@@ -60,7 +62,17 @@ pub fn expm1(x: d64) -> d64
     }
 }
 
-pub fn expm1_split(x: d64) -> (i32, d64)
+/// Returns significand and exponent of `exp`.
+///
+/// Given some argument `x`, returns a tuple `(m, y)`, such that the value of
+/// the exponential function is given by:
+///
+///     exp(x) == pow(2, m) * (1.0 + y),
+///
+/// where the significant `-0.5 < y < 0.5` is accurate to full relative
+/// precision and `m` is an integer which can be larger than the f64 range
+/// but must be smaller than 2<<24.
+pub fn exp_split(x: d64) -> (i32, d64)
 {
     // Here is the main strategy. Let α be log(2)/128. Then we first reduce the
     // argument x modulo α, i.e.:
@@ -81,6 +93,7 @@ pub fn expm1_split(x: d64) -> (i32, d64)
     return (m, expm1_y);
 }
 
+/// Natural logarithm `log(x)`
 pub fn log(x: d64) -> d64
 {
     // Start with logarithm of hi part
@@ -99,6 +112,7 @@ pub fn log(x: d64) -> d64
     return log_x;
 }
 
+/// Natural log of shifted argument `log(x + 1)` without intermediate rounding.
 pub fn log1p(x: d64) -> d64
 {
     // Start with logarithm of hi part
