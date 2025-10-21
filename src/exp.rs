@@ -1,6 +1,7 @@
 use super::d64;
 use super::arith::*;
 use super::consts::*;
+use super::checks;
 use libm::ldexp;
 
 // The value of MAX.ln().
@@ -11,7 +12,7 @@ pub fn exp(x: d64) -> d64
 {
     // Now we perform checks for special values. Using not <= instead of >
     // also catches NaNs.
-    if !(x.hi.abs() < LOG_MAX) {
+    if !(x.hi.abs() <= LOG_MAX) {
         if is_nan(x) {
             return x;
         } else if x.hi > 0.0 {
@@ -24,19 +25,20 @@ pub fn exp(x: d64) -> d64
     let (m, expm1_y) = exp_split(x);
     let exp_m = ldexp(1.0, m);
     let exp_y = addfast_dq(1.0, expm1_y);
-    let exp_x = mul_pow2(exp_y, exp_m);
+    let exp_x = if exp_m.is_finite() {
+        mul_pow2(exp_y, exp_m)
+    } else {
+        checks::ldexp(exp_y, m)
+    };
     return exp_x;
 }
 
 /// Shifted exponential function `exp(x) - 1` without intermediate rounding
 pub fn expm1(x: d64) -> d64
 {
-    // The value of MAX.ln().
-    const LOG_MAX: f64 = 709.782712893384;
-
     // Now we perform checks for special values. Using not <= instead of >
     // also catches NaNs.
-    if !(x.hi.abs() < LOG_MAX) {
+    if !(x.hi.abs() <= LOG_MAX) {
         if is_nan(x) {
             return x;
         } else if x.hi > 0.0 {
@@ -55,7 +57,11 @@ pub fn expm1(x: d64) -> d64
     } else {
         let exp_m = ldexp(1.0, m);
         let exp_y = addfast_dq(1.0, expm1_y);
-        let exp_x = mul_pow2(exp_y, exp_m);
+        let exp_x = if exp_m.is_finite() {
+            mul_pow2(exp_y, exp_m)
+        } else {
+            checks::ldexp(exp_y, m)
+        };
 
         // XXX dispatch based on magnitude
         return exp_x - 1.0;
@@ -67,7 +73,7 @@ pub fn expm1(x: d64) -> d64
 /// Given some argument `x`, returns a tuple `(m, y)`, such that the value of
 /// the exponential function is given by:
 ///
-///     exp(x) == pow(2, m) * (1.0 + y),
+///   exp(x) == pow(2, m) * (1.0 + y),
 ///
 /// where the significant `-0.5 < y < 0.5` is accurate to full relative
 /// precision and `m` is an integer which can be larger than the f64 range
@@ -449,6 +455,7 @@ mod test {
         }
 
         check_unary(exp, |x| x.exp(), d64::from(LOG_MAX), 1.0);
+        assert!(is_finite(exp(d64::from(LOG_MAX))));
         assert!(is_infinite(exp(d64::from((1.0 + f64::EPSILON) * LOG_MAX))));
     }
 
