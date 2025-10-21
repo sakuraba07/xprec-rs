@@ -130,6 +130,13 @@ impl One for d64 {
     }
 }
 
+impl Inv for d64 {
+    type Output = d64;
+    fn inv(self) -> d64 {
+        return arith::reciprocal_q(self);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // UNIT TESTS
 
