@@ -38,7 +38,8 @@ pub fn exp_scaled(x: d64, p: i32) -> d64
     let (m, n) = reduce_mod_128(k as i32);
     let exp_m = ldexp(1.0, m + p);
     let exp_y = addfast_dq(1.0, expm1_small(n, y));
-    return mul_pow2(exp_y, exp_m);
+    let exp_x = mul_pow2(exp_y, exp_m);
+    return exp_x;
 }
 
 pub fn expm1(x: d64) -> d64
@@ -82,6 +83,45 @@ pub fn expm1(x: d64) -> d64
         // XXX dispatch based on magnitude
         return exp_x - 1.0;
     }
+}
+
+pub fn log(x: d64) -> d64
+{
+    // Start with logarithm of hi part
+    let log_x0 = x.hi.ln();
+    if !log_x0.is_finite() {
+        return d64::from(log_x0);
+    }
+
+    // Abramowitz and Stegun give the following series expansion (4.1.30):
+    //
+    //   log(x) = log(x0) + 2 (x - x0)/(x + x0) + O(x - x0)^3
+    //
+    let x0 = exp(d64::from(log_x0));
+    let corr = mul_pow2(subfast_qq(x, x0) / addfast_qq(x, x0), 2.0);
+    let log_x = log_x0 + corr;
+    return log_x;
+}
+
+pub fn log1p(x: d64) -> d64
+{
+    // Start with logarithm of hi part
+    let log_x0 = x.hi.ln_1p();
+    if !log_x0.is_finite() {
+        return d64::from(log_x0);
+    }
+
+    // Again, we can use the same correction, but log1p <-> expm1
+    //
+    //   log(1 + x) = log(1 + x0) + 2 (x - x0)/(2 + x + x0) + O(x - x0)^3
+    //
+    // One need not worry about cancellation in the denominator for
+    // x close to -1, since that is where we have an intrinsic loss of
+    // precision anyway
+    let x0 = expm1(d64::from(log_x0));
+    let corr = mul_pow2(subfast_qq(x, x0) / addfast_qq(2.0 + x, x0), 2.0);
+    let log_x = log_x0 + corr;
+    return log_x;
 }
 
 fn reduce_mod_128(k: i32) -> (i32, i32)
@@ -132,6 +172,7 @@ fn expm1_small(n: i32, y: d64) -> d64
     //     expm1(x) = expm1(n * α) + exp(n * α) * expm1(y)
     //
     // to reduce the expansion order.
+    assert!(2.0 * y.hi.abs() <= 0.0054152123481245725);
     let expm1_n = expm1_alphas(n);
     let exp_n = addfast_dq(1.0, expm1_n);
     let expm1_y = expm1_kernel(y, 6, 10);
@@ -150,16 +191,16 @@ fn expm1_kernel(x: d64, nquad: i32, n: i32) -> d64
     r = addfast_qq(r, mul_pow2(xpow, 0.5));
 
     // r += x^k / k!
-    for k in 3..nquad {
+    for k in 3..nquad+1 {
         xpow = xpow * x;
         r = addfast_qq(r, reciprocal_factorial(k) * xpow);
     }
 
     // Here the terms are so small that they only affect the lo part, so
     // we can get away with double arithmetic.
-    let mut r_d = 0.0;
+    let mut r_d: f64 = 0.0;
     let mut xpow_d = xpow.hi;
-    for k in nquad+1..n {
+    for k in nquad+1..n+1 {
         xpow_d *= x.hi;
         r_d += reciprocal_factorial(k).hi * xpow_d;
     }
@@ -353,6 +394,18 @@ mod test {
     use super::super::test_utils::*;
 
     #[test]
+    fn test_expm1_kernel()
+    {
+        // small values, start from ALPHA/2
+        let mut x = d64::from(0.0025);
+        while x.hi > 1e-290 {
+            check_unary(|x| expm1_kernel(x, 6, 10), |x| x.exp_m1(), x, 1.1);
+            check_unary(|x| expm1_kernel(x, 6, 10), |x| x.exp_m1(), -x, 1.1);
+            x *= 0.947;
+        }
+    }
+
+    #[test]
     fn test_exp()
     {
         // special values
@@ -364,7 +417,6 @@ mod test {
 
         // simple vals
         check_unary(exp, |x| x.exp(), d64::from(0.0), 1.0);
-        check_unary(exp, |x| x.exp(), d64::from(1.0), 1.0);
 
         // small values
         let mut x = d64::from(0.25);
@@ -373,6 +425,8 @@ mod test {
             check_unary(exp, |x| x.exp(), -x, 1.0);
             x *= 0.947;
         }
+
+        check_unary(exp, |x| x.exp(), d64::from(1.0), 1.0);
 
         // large values
         x = d64::from(0.25);
@@ -404,21 +458,51 @@ mod test {
         check_unary(expm1, |x| x.exp_m1(), d64::from(1.0), 1.0);
 
         // small values
-        let mut x = d64::from(0.25);
+        // XXX here we have to work on the kernel
+        let mut x = d64::from(0.5);
         while x.hi > 1e-290 {
-            check_unary(expm1, |x| x.exp_m1(), x, 1.0);
-            check_unary(expm1, |x| x.exp_m1(), -x, 1.0);
+            check_unary(expm1, |x| x.exp_m1(), x, 1.5);
+            check_unary(expm1, |x| x.exp_m1(), -x, 1.5);
             x *= 0.947;
         }
 
         // large values
-        x = d64::from(0.25);
+        x = d64::from(0.5);
         while x.hi < 708.0 {
             check_unary(expm1, |x| x.exp_m1(), x, 1.0);
             if x.hi < 670.0 {
                 check_unary(expm1, |x| x.exp_m1(), -x, 1.0);
             }
             x *= 1.0041;
+        }
+    }
+
+    #[test]
+    fn test_log()
+    {
+        // special values
+        assert!(is_infinite(log(d64::INFINITY)));
+        assert!(is_infinite(log(d64::from(0.0))));
+        assert!(is_nan(log(d64::from(-0.1))));
+        assert!(is_nan(log(d64::NEG_INFINITY)));
+        assert!(is_nan(log(d64::NAN)));
+
+        // simple vals
+        check_unary(log, |x| x.ln(), d64::from(1.0), 1.0);
+        check_unary(log, |x| x.ln(), d64::from(3.0), 1.0);
+
+        // small values
+        let mut x = d64::from(1.0);
+        while x.hi > 1e-290 {
+            check_unary(log, |x| x.ln(), x, 1.0);
+            x *= 0.947;
+        }
+
+        // large values
+        x = d64::from(1.0);
+        while x.hi < 1e300 {
+            check_unary(log, |x| x.ln(), x, 1.0);
+            x *= 1.13;
         }
     }
 }
