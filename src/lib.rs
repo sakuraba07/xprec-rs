@@ -34,6 +34,7 @@ mod test_utils;
 pub mod arith;
 pub mod checks;
 pub mod consts;
+pub mod roots;
 pub mod round;
 pub mod traits;
 
