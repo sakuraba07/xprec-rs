@@ -30,8 +30,10 @@ pub trait InvSqrt {
 
 #[cfg(test)]
 mod test_utils;
+mod utils;
 
 pub mod arith;
+pub mod circular;
 pub mod checks;
 pub mod consts;
 pub mod exp;
