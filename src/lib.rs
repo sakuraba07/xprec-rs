@@ -37,6 +37,7 @@ pub mod circular;
 pub mod checks;
 pub mod consts;
 pub mod exp;
+pub mod gauss;
 pub mod hyperbolic;
 pub mod roots;
 pub mod round;
