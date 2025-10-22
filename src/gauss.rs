@@ -8,7 +8,7 @@ pub fn gauss_legendre(x: &mut [d64], w: &mut [d64])
     let n = x.len();
     gauss_chebyshev_theta(x);
     for _iter in 0..10 {
-        legendre_theta_newton(n as i64, x);
+        legendre_theta_newton(n as i64, x, w);
     }
     for i in 0..n {
         x[i] = cos(x[i]);
@@ -26,14 +26,17 @@ fn gauss_chebyshev_theta(x: &mut [d64])
     }
 }
 
-fn legendre_theta_newton(n: i64, x: &mut [d64])
+fn legendre_theta_newton(n: i64, x: &mut [d64], w: &mut [d64])
 {
+    // Newton iteration for theta rather than x
+    // SIAM J. SCI. COMPUT., Vol. 35, No. 2, p. A652
     for i in 0..x.len() {
         let (s, c) = sincos(x[i]);
         let (pn_1, pn) = plx(n, c);
         let dn = (n as f64) * (c * pn - pn_1) / s;
         let dx = pn / dn;
         x[i] -= dx;
+        w[i] = 2.0 / square_q(dn);
     }
 }
 
@@ -73,6 +76,7 @@ mod test {
         //let wsum = w.into_iter().reduce(|acc, t| acc + t).unwrap();
         //println!("{:#?}", wsum);
         println!("{:#?}", x);
+        println!("{:#?}", w);
         //println!("{:#?}", w);
     }
 }
