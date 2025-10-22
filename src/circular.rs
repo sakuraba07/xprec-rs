@@ -7,10 +7,10 @@ pub fn sin(x: d64) -> d64
 {
     let (sector, z) = reduce_mod_pi2(x);
     match sector {
-        0 => sin_kernel(z, 7, 13),
-        1 => cos_kernel(z, 8, 13),      // sin(x) = cos(x - pi/2)
-        2 => -sin_kernel(z, 7, 13),     // sin(x) = -sin(x - pi)
-        3 => -cos_kernel(z, 8, 13),     // sin(x) = -cos(x + pi/2)
+        0 => sin_kernel(z),
+        1 => cos_kernel(z),      // sin(x) = cos(x - pi/2)
+        2 => -sin_kernel(z),     // sin(x) = -sin(x - pi)
+        3 => -cos_kernel(z),     // sin(x) = -cos(x + pi/2)
         _ => panic!("illegal sector")
     }
 }
@@ -19,10 +19,10 @@ pub fn cos(x: d64) -> d64
 {
     let (sector, z) = reduce_mod_pi2(x);
     match sector {
-        0 => cos_kernel(z, 8, 13),
-        1 => -sin_kernel(z, 7, 13),
-        2 => -cos_kernel(z, 8, 13),
-        3 => sin_kernel(z, 7, 13),
+        0 => cos_kernel(z),
+        1 => -sin_kernel(z),
+        2 => -cos_kernel(z),
+        3 => sin_kernel(z),
         _ => panic!("illegal sector")
     }
 }
@@ -31,10 +31,10 @@ pub fn sincos(x: d64) -> (d64, d64)
 {
     let (sector, z) = reduce_mod_pi2(x);
     match sector {
-        0 => (sin_kernel(z, 7, 13),   cos_kernel(z, 8, 13)),
-        1 => (cos_kernel(z, 8, 13),  -sin_kernel(z, 7, 13)),
-        2 => (-sin_kernel(z, 7, 13), -cos_kernel(z, 8, 13)),
-        3 => (-cos_kernel(z, 8, 13),  sin_kernel(z, 7, 13)),
+        0 => (sin_kernel(z),   cos_kernel(z)),
+        1 => (cos_kernel(z),  -sin_kernel(z)),
+        2 => (-sin_kernel(z), -cos_kernel(z)),
+        3 => (-cos_kernel(z),  sin_kernel(z)),
         _ => panic!("illegal sector")
     }
 }
@@ -68,10 +68,13 @@ fn reduce_mod_pi2(x: d64) -> (i32, d64)
     return (sector, z);
 }
 
-fn sin_kernel(x: d64, nquad: i32, n: i32) -> d64
+fn sin_kernel(x: d64) -> d64
 {
     // Taylor series of the sin around 0
-    assert!(x.hi.abs() <= 1.0);
+    assert!(x.hi.abs() <= 0.7854);
+    const NQUAD: i32 = 7;
+    const N: i32 = 13;
+
     let xsq = -square_q(x);
 
     // r = x
@@ -79,7 +82,7 @@ fn sin_kernel(x: d64, nquad: i32, n: i32) -> d64
     let mut xpow = x;
 
     // r += x * (-x*x)**(i) / (2i+1)!
-    for i in 1..nquad+1 {
+    for i in 1..NQUAD+1 {
         xpow *= xsq;
         r = addfast_qq(r, reciprocal_factorial(2*i + 1) * xpow);
     }
@@ -89,7 +92,7 @@ fn sin_kernel(x: d64, nquad: i32, n: i32) -> d64
     let xsq_d = xsq.hi;
     let mut xpow_d = xpow.hi;
     let mut r_d = 0.0;
-    for i in nquad+1..n+1 {
+    for i in NQUAD+1..N+1 {
         xpow_d *= xsq_d;
         r_d += reciprocal_factorial(2*i + 1).hi * xpow_d;
     }
@@ -99,10 +102,13 @@ fn sin_kernel(x: d64, nquad: i32, n: i32) -> d64
     return r;
 }
 
-fn cos_kernel(x: d64, nquad: i32, n: i32) -> d64
+fn cos_kernel(x: d64) -> d64
 {
-    // Taylor series of the sin around 0
-    assert!(x.hi.abs() <= 1.0);
+    // Taylor series of the cosine around 0
+    assert!(x.hi.abs() <= 0.7854);
+    const NQUAD: i32 = 8;
+    const N: i32 = 13;
+
     let xsq = -square_q(x);
 
     // r = 1 - x*x / 2
@@ -110,7 +116,7 @@ fn cos_kernel(x: d64, nquad: i32, n: i32) -> d64
     let mut xpow = xsq;
 
     // r += (-x*x)**(i+1) / (2i)!
-    for i in 2..nquad+1 {
+    for i in 2..NQUAD+1 {
         xpow *= xsq;
         r = addfast_qq(r, reciprocal_factorial(2*i) * xpow);
     }
@@ -120,7 +126,7 @@ fn cos_kernel(x: d64, nquad: i32, n: i32) -> d64
     let xsq_d = xsq.hi;
     let mut xpow_d = xpow.hi;
     let mut r_d = 0.0;
-    for i in nquad+1..n+1 {
+    for i in NQUAD+1..N+1 {
         xpow_d *= xsq_d;
         r_d += reciprocal_factorial(2*i).hi * xpow_d;
     }
@@ -240,10 +246,10 @@ mod test {
         // small values, start from PI/4
         let mut x = d64::from(f64::consts::PI / 4.0);
         while x.hi > 1e-290 {
-            check_unary(|x| sin_kernel(x, 7, 13), |x| x.sin(), x, 1.1);
-            check_unary(|x| sin_kernel(x, 7, 13), |x| x.sin(), -x, 1.1);
-            check_unary(|x| cos_kernel(x, 8, 13), |x| x.cos(), x, 1.1);
-            check_unary(|x| cos_kernel(x, 8, 13), |x| x.cos(), -x, 1.1);
+            check_unary(|x| sin_kernel(x), |x| x.sin(), x, 1.1);
+            check_unary(|x| sin_kernel(x), |x| x.sin(), -x, 1.1);
+            check_unary(|x| cos_kernel(x), |x| x.cos(), x, 1.1);
+            check_unary(|x| cos_kernel(x), |x| x.cos(), -x, 1.1);
             x *= 0.947;
         }
     }
