@@ -30,11 +30,12 @@ pub fn cos(x: d64) -> d64
 pub fn sincos(x: d64) -> (d64, d64)
 {
     let (sector, z) = reduce_mod_pi2(x);
+    let (s, c) = sincos_kernel(z);
     match sector {
-        0 => (sin_kernel(z),   cos_kernel(z)),
-        1 => (cos_kernel(z),  -sin_kernel(z)),
-        2 => (-sin_kernel(z), -cos_kernel(z)),
-        3 => (-cos_kernel(z),  sin_kernel(z)),
+        0 => ( s,  c),
+        1 => ( c, -s),
+        2 => (-s, -c),
+        3 => (-c,  s),
         _ => panic!("illegal sector")
     }
 }
@@ -135,6 +136,14 @@ fn cos_kernel(x: d64) -> d64
     r = addfast_qd(r, r_d);
     return r;
 }
+
+fn sincos_kernel(x: d64) -> (d64, d64)
+{
+    let s = sin_kernel(x);
+    let c = sqrt_q(subfast_dq(1.0, square_q(s)));
+    return (s, c);
+}
+
 
 // fn _asin(x: d64) -> d64
 // {
@@ -246,10 +255,15 @@ mod test {
         // small values, start from PI/4
         let mut x = d64::from(f64::consts::PI / 4.0);
         while x.hi > 1e-290 {
-            check_unary(|x| sin_kernel(x), |x| x.sin(), x, 1.1);
-            check_unary(|x| sin_kernel(x), |x| x.sin(), -x, 1.1);
-            check_unary(|x| cos_kernel(x), |x| x.cos(), x, 1.1);
-            check_unary(|x| cos_kernel(x), |x| x.cos(), -x, 1.1);
+            check_unary(sin_kernel, |x| x.sin(), x, 1.1);
+            check_unary(sin_kernel, |x| x.sin(), -x, 1.1);
+            check_unary(cos_kernel, |x| x.cos(), x, 1.1);
+            check_unary(cos_kernel, |x| x.cos(), -x, 1.1);
+
+            check_unary(|x| sincos_kernel(x).0, |x| x.sin(), x, 1.1);
+            check_unary(|x| sincos_kernel(x).0, |x| x.sin(), -x, 1.1);
+            check_unary(|x| sincos_kernel(x).1, |x| x.cos(), x, 1.1);
+            check_unary(|x| sincos_kernel(x).1, |x| x.cos(), -x, 1.1);
             x *= 0.947;
         }
     }
