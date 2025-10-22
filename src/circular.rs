@@ -1,7 +1,12 @@
 use std::f64;
+use crate::consts::is_finite;
+
 use super::utils::reciprocal_factorial;
 use super::d64;
 use super::arith::*;
+use super::consts;
+use super::consts::*;
+use super::checks::*;
 
 pub fn sin(x: d64) -> d64
 {
@@ -144,105 +149,100 @@ fn sincos_kernel(x: d64) -> (d64, d64)
     return (s, c);
 }
 
+pub fn asin(x: d64) -> d64
+{
+    // Compute a approximation to double precision
+    let y0 = x.hi.asin();
+    if !y0.is_finite() {
+        return d64::from(y0);
+    }
 
-// fn _asin(x: d64) -> d64
-// {
-//     // Compute a approximation to double precision
-//     let y0 = std::asin(x.hi());
-//     if (!isfinite(y0))
-//         return y0;
+    // This is where Taylor fails
+    if abs(x) == d64::from(1.0) {
+        return copysign(consts::PI_HALF, x);
+    }
 
-//     // This is where Taylor fails
-//     if (fabs(x) == 1.0) {
-//         return copysign(xprec::numbers::pi_half, x);
-//     }
+    // Perform Taylor expansion:
+    //
+    //    asin(x) = asin(x0) + (x - x0) / sqrt(1 - x0**2)
+    //            = y0 + (x - sin(y0)) / cos(y0)
+    //
+    // XXX this has problems around 1
+    let (x0, w) = sincos(d64::from(y0));
+    let y = y0 + subfast_qq(x, x0) / w;
+    return y;
+}
 
-//     // Perform Taylor expansion:
-//     //
-//     //    asin(x) = asin(x0) + (x - x0) / sqrt(1 - x0**2)
-//     //            = y0 + (x - sin(y0)) / cos(y0)
-//     //
-//     x0: d64, w;
-//     sincos(y0, x0, w);
+pub fn acos(x: d64) -> d64
+{
+    // Compute a approximation to double precision
+    let y0 = x.hi.acos();
+    if !y0.is_finite() {
+        return d64::from(y0);
+    }
 
-//     let y = y0 + (x - x0) / w;
-//     return y;
-// }
+    // This is where Taylor fails
+    if x == d64::from(1.0) {
+        return d64::from(0.0);
+    } else if x == d64::from(-1.0) {
+        return consts::PI;
+    }
 
-// fn _acos(x: d64) -> d64
-// {
-//     // Compute a approximation to double precision
-//     let y0 = std::acos(x.hi());
-//     if (!isfinite(y0))
-//         return y0;
+    // Perform Taylor expansion:
+    //
+    //    acos(x) = acos(x0) - (x - x0) / sqrt(1 - x0**2)
+    //            = y0 - (x - cos(y0)) / sin(y0)
+    //
+    // XXX this has problems around 1
+    let (w, x0) = sincos(d64::from(y0));
+    let y = y0 + subfast_qq(x0, x) / w;
+    return y;
+}
 
-//     // This is where Taylor fails
-//     if (x == 1.0)
-//         return 0.0;
-//     if (x == -1.0)
-//         return xprec::numbers::pi;
+pub fn atan(x: d64) -> d64
+{
+    // For large values, use reflection formula
+    if !(x.hi.abs() <= 1.0) {
+        if is_nan(x) {
+            return x;
+        }
+        let mut y = copysign(consts::PI_HALF, x);
+        if is_finite(x) {
+            y = subfast_qq(y, atan(reciprocal_q(x)));
+        }
+        return y;
+    }
 
-//     // Perform Taylor expansion:
-//     //
-//     //    acos(x) = acos(x0) - (x - x0) / sqrt(1 - x0**2)
-//     //            = y0 - (x - cos(y0)) / sin(y0)
-//     //
-//     x0: d64, w, diff;
+    // Again use Taylor expansion
+    let y0 = x.hi.atan();
+    let (s, c) = sincos(d64::from(y0));
+    let x0 = s / c;
+    let y = addfast_dq(y0, subfast_qq(x, x0) * square_q(c));
+    return y;
+}
 
-//     sincos(y0, w, x0);
-//     diff = (x0 - x) / w;
-//     y0 += diff;
-//     return y0;
-// }
+pub fn atan2(y: d64, x: d64) -> d64
+{
+    // Special values
+    if is_nan(x) || is_nan(y) {
+        return d64::NAN;
+    } else if is_zero(y) {
+        if x.hi >= 0.0 {
+            return d64::from(0.0);
+        } else {
+            return consts::PI;
+        }
+    } else if is_zero(x) {
+        return copysign(consts::PI_HALF, y);
+    }
 
-// fn _atan(x: d64) -> d64
-// {
-//     // For large values, use reflection formula
-//     if (std::fabs(x.hi()) > 1.0) {
-//         let y = copysign(xprec::numbers::pi_half, x);
-//         if (isfinite(x))
-//             y -= atan(reciprocal(x));
-//         return y;
-//     }
+    let mut res = atan(y / x);
+    if x.hi < 0.0 {
+        res = addfast_qq(copysign(consts::PI, y), res);
+    }
+    return res;
+}
 
-//     // Again use Taylor expansion
-//     let y0 = std::atan(x.hi());
-//     if (!isfinite(y0))
-//         return y0;
-
-//     s: d64, c, x0;
-
-//     sincos(y0, s, c);
-//     x0 = s / c;
-//     y0 += (x - x0) * square(c);
-
-//     return y0;
-// }
-
-// fn _atan2(y: d64, x: d64) -> d64
-// {
-//     using xprec::numbers::pi;
-//     using xprec::numbers::pi_half;
-
-//     // Special values
-//     if (isnan(x) || isnan(y))
-//         return NAN;
-//     if (iszero(y))
-//         return x.hi() >= 0 ? 0.0 : pi;
-//     if (iszero(x))
-//         return copysign(pi_half, y);
-
-//     let res = atan(y / x);
-//     if (x.hi() < 0)
-//         res = copysign(pi, y).add_small(res);
-//     return res;
-// }
-
-// extern "C" XPREC_API_EXPORT
-// xprec_ddouble xprec_atan2(xprec_ddouble x, xprec_ddouble y)
-// {
-//     return _atan2(x, y);
-// }
 
 #[cfg(test)]
 mod test {

@@ -69,6 +69,11 @@ impl d64 {
 
 }
 
+pub const PI: d64 = d64 {hi: 1.5707963267948966, lo: 6.123233995736766e-17};
+
+pub const PI_HALF: d64 = d64 {hi: 1.5707963267948966, lo: 6.123233995736766e-17};
+
+
 #[inline]
 pub fn is_finite(x: d64) -> bool {
     return x.hi.is_finite();
