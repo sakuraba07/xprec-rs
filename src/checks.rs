@@ -1,78 +1,58 @@
-
-use libm;
+use std::num::FpCategory;
 use isclose;
-use super::d64;
-use super::arith;
-use super::consts;
+use crate::d64;
+use crate::arith;
 
 #[inline]
-pub fn ldexp(a: d64, n: i32) -> d64
-{
-    return d64 {hi: libm::ldexp(a.hi, n), lo: libm::ldexp(a.lo, n)};
+pub fn is_finite(x: d64) -> bool {
+    return x.hi.is_finite();
 }
 
 #[inline]
-pub fn scalbn(a: d64, n: i32) -> d64
-{
-    return d64 {hi: libm::scalbn(a.hi, n), lo: libm::scalbn(a.lo, n)};
+pub fn is_infinite(x: d64) -> bool {
+    return x.hi.is_infinite();
 }
 
 #[inline]
-pub fn ilogb(x: d64) -> i32
+pub fn is_nan(x: d64) -> bool {
+    return x.hi.is_nan();
+}
+
+#[inline]
+pub fn is_normal(x: d64) -> bool
 {
-    return libm::ilogb(x.hi);
+    // Denormalization is double-double is a bit of a strange concept,
+    // since the lo part may be a denormalized number even if the whole
+    // number is still "normal".
+    return x.hi.is_normal() && (x.hi * f64::EPSILON).is_normal();
+}
+
+#[inline]
+pub fn is_subnormal(x: d64) -> bool
+{
+    // Denormalization is double-double is a bit of a strange concept,
+    // since the lo part may be a denormalized number even if the whole
+    // number is still "normal".
+    return x.hi.is_subnormal() || (x.hi * f64::EPSILON).is_subnormal();
+}
+
+#[inline]
+pub fn is_zero(x: d64) -> bool {
+    return x.hi == 0.0;
+}
+
+#[inline]
+pub fn classify(x: d64) -> FpCategory
+{
+    // This also works with zero, since that can be determined from the
+    // hi part alone
+    return x.hi.classify();
 }
 
 #[inline]
 pub fn is_sign_negative(a: d64) -> bool
 {
     return a.hi.is_sign_negative();
-}
-
-#[inline]
-pub fn copysign(mag: d64, sgn: d64) -> d64
-{
-    // The sign is determined by the hi part, however, the sign of hi and lo
-    // need not be the same, so we cannot merely broadcast copysign to both
-    // parts.
-    if is_sign_negative(mag) != is_sign_negative(sgn) {
-        arith::neg_q(mag)
-    } else {
-        mag
-    }
-}
-
-#[inline]
-pub fn abs(x: d64) -> d64
-{
-    if x.hi.is_sign_negative() {
-        arith::neg_q(x)
-    } else {
-        x
-    }
-}
-
-#[inline]
-pub fn min(a: d64, b: d64) -> d64
-{
-    // fmin considers NaN to be the largest number. (a <= b) is false with
-    // either element being NaN, if a is NaN, then it is okay to return b;
-    // but if b is NaN, we have to return a
-    if a <= b || consts::is_nan(b) {
-        a
-    } else {
-        b
-    }
-}
-
-#[inline]
-pub fn max(a: d64, b: d64) -> d64
-{
-    if a <= b || consts::is_nan(a) {
-        b
-    } else {
-        a
-    }
 }
 
 /// Checks that two d64 numbers are close.
@@ -118,8 +98,57 @@ impl isclose::IsClose for d64 {
 #[cfg(test)]
 mod test {
     use isclose::assert_is_close;
-
     use super::*;
+    use crate::funcs;
+
+    fn check_class(x: d64, cat: FpCategory) {
+        assert!(is_normal(x) == (cat == FpCategory::Normal));
+        assert!(is_subnormal(x) == (cat == FpCategory::Subnormal));
+        assert!(is_nan(x) == (cat == FpCategory::Nan));
+        assert!(is_zero(x) == (cat == FpCategory::Zero));
+        assert!(is_infinite(x) == (cat == FpCategory::Infinite));
+
+        let cat_finite = cat != FpCategory::Infinite && cat != FpCategory::Nan;
+        assert!(is_finite(x) == cat_finite);
+    }
+
+    #[test]
+    fn test_class() {
+        check_class(d64::from(-1.0) + d64::EPSILON, FpCategory::Normal);
+        check_class(d64::EPSILON, FpCategory::Normal);
+
+        // Check min
+        check_class(d64::MIN, FpCategory::Normal);
+        check_class((1.0 + d64::EPSILON) * d64::MIN, FpCategory::Infinite);
+        check_class((1.0 + d64::EPSILON/8.0) * d64::MIN, FpCategory::Normal);
+
+        // Check min exp
+        check_class(funcs::ldexp(d64::from(1.1), d64::MIN_EXP), FpCategory::Normal);
+        check_class(funcs::ldexp(d64::from(0.9), d64::MIN_EXP), FpCategory::Subnormal);
+
+        // Check max
+        check_class(d64::MAX, FpCategory::Normal);
+        check_class((1.0 + d64::EPSILON) * d64::MAX, FpCategory::Infinite);
+        check_class((1.0 + d64::EPSILON/8.0) * d64::MAX, FpCategory::Normal);
+
+        // Check max exp
+        check_class(funcs::ldexp(d64::from(0.9), d64::MAX_EXP), FpCategory::Normal);
+        check_class(funcs::ldexp(d64::from(1.0), d64::MAX_EXP), FpCategory::Infinite);
+
+        // Check min positive
+        check_class(d64::MIN_POSITIVE, FpCategory::Normal);
+        check_class((1.0 + f64::EPSILON) * d64::MIN_POSITIVE, FpCategory::Normal);
+        check_class((1.0 - f64::EPSILON) * d64::MIN_POSITIVE, FpCategory::Subnormal);
+
+        // Check nan
+        check_class(d64::NAN, FpCategory::Nan);
+        check_class(-d64::NAN, FpCategory::Nan);
+        check_class(d64::NAN / d64::NAN, FpCategory::Nan);
+
+        // check zero
+        check_class(d64::from(0.0), FpCategory::Zero);
+        check_class(d64::from(-0.0), FpCategory::Zero);
+    }
 
     #[test]
     fn test_isclose()

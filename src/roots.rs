@@ -75,8 +75,8 @@ pub fn inv_sqrt(x: d64) -> d64
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::consts::*;
-    use super::super::test_utils::*;
+    use crate::checks::*;
+    use crate::test_utils::*;
 
     #[test]
     fn test_hypot()

@@ -1,7 +1,7 @@
 use super::d64;
 use super::arith::*;
 use super::checks::*;
-use super::consts::*;
+use super::funcs::*;
 use super::roots::*;
 use super::exp::*;
 

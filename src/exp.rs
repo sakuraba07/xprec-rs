@@ -1,7 +1,7 @@
 use super::d64;
 use super::arith::*;
-use super::consts::*;
-use super::checks;
+use super::checks::*;
+use super::funcs;
 use super::utils::reciprocal_factorial;
 use libm::ldexp;
 
@@ -29,7 +29,7 @@ pub fn exp(x: d64) -> d64
     let exp_x = if exp_m.is_finite() {
         mul_pow2(exp_y, exp_m)
     } else {
-        checks::ldexp(exp_y, m)
+        funcs::ldexp(exp_y, m)
     };
     return exp_x;
 }
@@ -61,7 +61,7 @@ pub fn expm1(x: d64) -> d64
         let exp_x = if exp_m.is_finite() {
             mul_pow2(exp_y, exp_m)
         } else {
-            checks::ldexp(exp_y, m)
+            funcs::ldexp(exp_y, m)
         };
 
         // XXX dispatch based on magnitude

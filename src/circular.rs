@@ -1,12 +1,11 @@
 use std::f64;
-use crate::consts::is_finite;
 
 use super::utils::reciprocal_factorial;
 use super::d64;
 use super::arith::*;
 use super::consts;
-use super::consts::*;
 use super::checks::*;
+use super::funcs::*;
 
 pub fn sin(x: d64) -> d64
 {
