@@ -15,28 +15,28 @@ pub fn gauss_legendre(x: &mut [d64], w: &mut [d64])
     }
 }
 
-fn gauss_chebyshev_theta(x: &mut [d64])
+fn gauss_chebyshev_theta(θ: &mut [d64])
 {
-    let n = x.len();
+    let n = θ.len();
     let fact = consts::PI / (n as f64);
     for i in 0..n {
         // goes from (npos-0.5)/n * pi back to 0.5 * pi/n
-        let theta = ((n - i) as f64 - 0.5) * fact;
-        x[i] = theta;
+        θ[i] = ((n - i) as f64 - 0.5) * fact;
     }
 }
 
-fn legendre_theta_newton(n: i64, x: &mut [d64], w: &mut [d64])
+fn legendre_theta_newton(n: i64, θ: &mut [d64], w: &mut [d64])
 {
     // Newton iteration for theta rather than x
     // SIAM J. SCI. COMPUT., Vol. 35, No. 2, p. A652
-    for i in 0..x.len() {
-        let (s, c) = sincos(x[i]);
+    #[allow(non_snake_case)]
+    for i in 0..θ.len() {
+        let (s, c) = sincos(θ[i]);
         let (pn_1, pn) = plx(n, c);
-        let dn = (n as f64) * (c * pn - pn_1) / s;
-        let dx = pn / dn;
-        x[i] -= dx;
-        w[i] = 2.0 / square_q(dn);
+        let pn_θ = (n as f64) * (c * pn - pn_1) / s;
+        let Δθ = pn / pn_θ;
+        θ[i] -= Δθ;
+        w[i] = 2.0 / square_q(pn_θ);
     }
 }
 
@@ -64,7 +64,6 @@ fn plx(ell: i64, x: d64) -> (d64, d64)
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::consts::*;
 
     #[test]
     fn test_leg()

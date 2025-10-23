@@ -36,12 +36,12 @@ l = @layout [a b]
 
 p1 = plot(@.(abs((x - xr) / xr) / eps(x) + 0.01), yscale=:log10, label="rel error (ulps)")
 plot!(@.(abs(x - xr) / eps(x) + 0.01), yscale=:log10, label="abs error (multiple of ϵ)")
-ylims!(0.5, 10000)
+ylims!(1, 1000)
 title!("Nodes")
 
 p2 = plot(@.(abs((w - wr) / wr) / eps(x) + 0.01), yscale=:log10, label="rel error (ulps)")
 plot!(@.(abs(w - wr) / eps(x) + 0.01), label="abs error (multiple of ϵ)")
-ylims!(0.5, 10000)
+ylims!(1, 1000)
 title!("Weights")
 
 p = plot(p1, p2; layout=l)
