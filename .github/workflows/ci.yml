@@ -1,0 +1,39 @@
+name: Cargo Build & Test
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            toolchain: stable
+
+          - os: ubuntu-latest
+            toolchain: beta
+
+    name: |
+      ${{matrix.os}} ${{matrix.toolchain}}
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Install rust
+        run: |
+          rustup update ${{ matrix.toolchain }} && \
+          rustup default ${{ matrix.toolchain }}
+
+      - name: Build crate
+        run: cargo build --verbose
+
+      - name: Test crate
+        run: cargo test --verbose
