@@ -3,7 +3,7 @@
  * Copyright (C) 2023-2025 Markus Wallerberger and others
  * SPDX-License-Identifier: MIT
  */
-use super::{d64, AddFast, SubFast};
+use super::{d64, AddFast, SubFast, CompensatedArithmetic};
 use super::{arith, round};
 use std::ops::*;
 use num_traits::*;
@@ -108,6 +108,55 @@ macro_rules! unary_op
 
 unary_op!(Neg, neg, arith::neg_q);
 
+// ---------------------------------------------------------------------------
+// COMPENSATE
+
+impl CompensatedArithmetic<f64> for d64 {
+    type Compensate = f64;
+
+    const ZERO: d64 = d64 {hi: 0.0, lo: 0.0};
+    const ONE: d64 = d64 {hi: 0.0, lo: 0.0};
+
+    #[inline(always)]
+    fn compensated_sum(a: f64, b: f64) -> d64 {
+        return arith::add_dd(a, b);
+    }
+
+    #[inline(always)]
+    fn compensated_diff(a: f64, b: f64) -> d64 {
+        return arith::sub_dd(a, b);
+    }
+
+    #[inline(always)]
+    fn compensated_prod(a: f64, b: f64) -> d64 {
+        return arith::mul_dd(a, b);
+    }
+
+    #[inline(always)]
+    fn compensated_ratio(a: f64, b: f64) -> d64 {
+        return arith::div_dd(a, b);
+    }
+
+    #[inline(always)]
+    fn compensated_sqrt(a: f64) -> d64 {
+        return arith::sqrt_d(a);
+    }
+
+    #[inline(always)]
+    unsafe fn compensated_fast_sum(a: f64, b: f64) -> d64 {
+        return arith::addfast_dd(a, b);
+    }
+
+    #[inline(always)]
+    unsafe fn compensated_fast_diff(a: f64, b: f64) -> d64 {
+        return arith::subfast_dd(a, b);
+    }
+
+    #[inline(always)]
+    fn compensate(self: &d64) -> f64 {
+        return self.lo;
+    }
+}
 
 // ---------------------------------------------------------------------------
 // NUMERIC TRAITS
