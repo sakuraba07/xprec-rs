@@ -131,6 +131,7 @@ pub mod arith;
 pub mod circular;
 pub mod checks;
 pub mod consts;
+pub mod convert;
 pub mod exp;
 pub mod funcs;
 pub mod gauss;
