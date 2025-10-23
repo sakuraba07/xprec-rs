@@ -65,17 +65,34 @@ fn plx(ell: i64, x: d64) -> (d64, d64)
 mod test {
     use super::*;
 
+    const X5: [d64; 5] = [
+        d64 {hi: -0.906179845938664,  lo: -2.909730553174891e-17},
+        d64 {hi: -0.5384693101056831, lo: 1.6678154894696646e-17},
+        d64 {hi: 0.0, lo: 0.0},
+        d64 {hi: 0.5384693101056831, lo: -1.6678154894696646e-17},
+        d64 {hi: 0.906179845938664,  lo: 2.909730553174891e-17}
+        ];
+    const W5: [d64; 5] = [
+        d64 {hi: 0.23692688505618908, lo: 2.6149055638876413e-18},
+        d64 {hi: 0.47862867049936647, lo: -2.8616217915821202e-18},
+        d64 {hi: 0.5688888888888889, lo: 4.934324553889585e-19},
+        d64 {hi: 0.47862867049936647, lo: -2.8616217915821202e-18},
+        d64 {hi: 0.23692688505618908, lo: 2.6149055638876413e-18},
+        ];
+
     #[test]
-    fn test_leg()
+    fn test_leg5()
     {
+        use isclose::assert_is_close;
+
+        // check Legendre quad for n = 5
         let mut x: [d64; 5] = [d64::from(0.0); 5];
         let mut w: [d64; 5] = [d64::from(0.0); 5];
-        gauss_legendre(&mut x, &mut w);
 
-        //let wsum = w.into_iter().reduce(|acc, t| acc + t).unwrap();
-        //println!("{:#?}", wsum);
-        println!("{:#?}", x);
-        println!("{:#?}", w);
-        //println!("{:#?}", w);
+        gauss_legendre(&mut x, &mut w);
+        for i in 0..5 {
+            assert_is_close!(x[i], X5[i], abs_tol=d64::EPSILON.hi);
+            assert_is_close!(w[i], W5[i], abs_tol=2.0*d64::EPSILON.hi);
+        }
     }
 }
