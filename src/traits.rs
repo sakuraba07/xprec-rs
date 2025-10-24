@@ -620,76 +620,109 @@ impl RealField for Df64 {
         todo!()
     }
 
+    #[inline(always)]
     fn atan2(self, other: Self) -> Self {
         return circular::atan2(self, other);
     }
 
+    #[inline(always)]
     fn min_value() -> Option<Self> {
         return Some(Df64::MIN_POSITIVE);
     }
 
+    #[inline(always)]
     fn max_value() -> Option<Self> {
         return Some(Df64::MAX);
     }
 
+    /// Circle number π
+    #[inline(always)]
     fn pi() -> Self {
         return consts::PI;
     }
 
+    /// Two times π
+    #[inline(always)]
     fn two_pi() -> Self {
-        todo!()
+        return consts::TWO_PI;
     }
 
+    /// Half of π
+    #[inline(always)]
     fn frac_pi_2() -> Self {
-        todo!()
+        return consts::PI_HALF;
     }
 
+    /// One third of π
+    #[inline(always)]
     fn frac_pi_3() -> Self {
-        todo!()
+        return consts::PI_THIRD;
     }
 
+    /// One quarter of π
+    #[inline(always)]
     fn frac_pi_4() -> Self {
-        todo!()
+        return consts::PI_FOURTH;
     }
 
+    /// One sixth of π
+    #[inline(always)]
     fn frac_pi_6() -> Self {
-        todo!()
+        return consts::PI_SIXTH;
     }
 
+    /// One eighth of π
+    #[inline(always)]
     fn frac_pi_8() -> Self {
-        todo!()
+        return consts::PI_EIGHTH;
     }
 
+    /// Reciprocal of π
+    #[inline(always)]
     fn frac_1_pi() -> Self {
-        todo!()
+        return consts::ONE_OVER_PI;
     }
 
+    /// Twice the reciprocal of π
+    #[inline(always)]
     fn frac_2_pi() -> Self {
-        todo!()
+        return consts::TWO_OVER_PI;
     }
 
+    /// Twice the reciprocal of the square root of π
+    #[inline(always)]
     fn frac_2_sqrt_pi() -> Self {
-        todo!()
+        return consts::TWO_OVER_SQRT_PI;
     }
 
+    /// Euler number e
+    #[inline(always)]
     fn e() -> Self {
-        todo!()
+        return consts::EULER_E;
     }
 
+    /// Binary logarithm of e
+    #[inline(always)]
     fn log2_e() -> Self {
-        todo!()
+        return consts::LOG2_E;
     }
 
+    /// Logarithm base-10 of e
+    #[inline(always)]
     fn log10_e() -> Self {
-        todo!()
+        return consts::LOG10_E;
     }
 
+    /// Natural logarithm of 2
+    #[inline(always)]
     fn ln_2() -> Self {
-        todo!()
+        return consts::LN_2;
     }
 
+    /// Natural logarithm of 10
+    #[inline(always)]
     fn ln_10() -> Self {
-        todo!()
+        return consts::LN_10;
     }
 }
 
