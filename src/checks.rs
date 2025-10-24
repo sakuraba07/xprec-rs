@@ -77,19 +77,19 @@ pub fn isclose_qq(a: d64, b: d64, atol: f64, rtol: f64) -> bool
 }
 
 impl approx::AbsDiffEq for d64 {
-    type Epsilon = f64;
+    type Epsilon = d64;
 
     #[inline(always)]
     fn default_epsilon() -> Self::Epsilon {
         // A useful default absolute tolerance is one at the floor of the
         // double range, since otherwise it is not clear what the scale is.
         // We also ignore denormal numbers.
-        return d64::MIN_POSITIVE.hi;
+        return d64::MIN_POSITIVE;
     }
 
     #[inline(always)]
-    fn abs_diff_eq(&self, other: &Self, epsilon: f64) -> bool {
-        return isclose_qq(*self, *other, epsilon, 0.0);
+    fn abs_diff_eq(&self, other: &Self, epsilon: d64) -> bool {
+        return isclose_qq(*self, *other, epsilon.hi, 0.0);
     }
 }
 
@@ -99,12 +99,12 @@ impl approx::RelativeEq for d64 {
         // A small multiple of the machine epsilon is the right default here.
         // We scale this by 3 because this is the largest error we observe from
         // any of the arithmetic operations.
-        return 3.0 * d64::EPSILON.hi;
+        return d64 { hi: 3.0 * d64::EPSILON.hi, lo: 0.0 };
     }
 
     #[inline(always)]
-    fn relative_eq(&self, other: &Self, epsilon: f64, max_relative: f64) -> bool {
-        return isclose_qq(*self, *other, epsilon, max_relative);
+    fn relative_eq(&self, other: &Self, epsilon: d64, max_relative: d64) -> bool {
+        return isclose_qq(*self, *other, epsilon.hi, max_relative.hi);
     }
 }
 
@@ -117,9 +117,9 @@ impl approx::UlpsEq for d64 {
     }
 
     #[inline(always)]
-    fn ulps_eq(&self, other: &Self, epsilon: f64, max_ulps: u32) -> bool {
+    fn ulps_eq(&self, other: &Self, epsilon: d64, max_ulps: u32) -> bool {
         let rtol = max_ulps as f64 * d64::EPSILON.hi;
-        return isclose_qq(*self, *other, epsilon, rtol);
+        return isclose_qq(*self, *other, epsilon.hi, rtol);
     }
 }
 

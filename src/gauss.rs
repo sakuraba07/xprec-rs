@@ -91,8 +91,8 @@ mod test {
 
         gauss_legendre(&mut x, &mut w);
         for i in 0..5 {
-            assert_abs_diff_eq!(x[i], X5[i], epsilon=d64::EPSILON.hi);
-            assert_abs_diff_eq!(w[i], W5[i], epsilon=2.0*d64::EPSILON.hi);
+            assert_abs_diff_eq!(x[i], X5[i], epsilon=d64::EPSILON);
+            assert_abs_diff_eq!(w[i], W5[i], epsilon=2.0*d64::EPSILON);
         }
     }
 }

@@ -3,11 +3,11 @@
  * Copyright (C) 2023-2025 Markus Wallerberger and others
  * SPDX-License-Identifier: MIT
  */
-use super::{d64, AddFast, SubFast, CompensatedArithmetic};
-use super::{arith, funcs, round};
+use super::*;
 use std::ops::*;
 use num_traits::*;
 use simba::simd::SimdValue;
+use simba::scalar::*;
 
 // ---------------------------------------------------------------------------
 // STANDARD TRAITS
@@ -221,6 +221,13 @@ impl Num for d64 {
     }
 }
 
+impl std::fmt::Display for d64 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+    {
+        write!(f, "(hi: {}, lo: {})", self.hi, self.lo)
+    }
+}
+
 // XXX we use impl_primitive_simd_value_for_scalar! for now. Revisit.
 impl SimdValue for d64 {
     const LANES: usize = 1;
@@ -288,6 +295,401 @@ impl Signed for d64 {
     #[inline(always)]
     fn is_negative(&self) -> bool {
         return self.hi.is_sign_negative();
+    }
+}
+
+impl SubsetOf<Self> for d64 {
+    #[inline(always)]
+    fn to_superset(&self) -> d64 {
+        return *self;
+    }
+
+    #[inline(always)]
+    fn from_superset_unchecked(element: &d64) -> d64 {
+        return *element;
+    }
+
+    #[inline(always)]
+    fn is_in_subset(_element: &d64) -> bool {
+        return true;
+    }
+}
+
+macro_rules! impl_superset (
+    ($subset:path as d64) => {
+        impl SupersetOf<$subset> for d64 {
+            #[inline(always)]
+            fn is_in_subset(&self) -> bool {
+                // Docs specify: The notion of “nested sets” is very broad and
+                // applies to what the types are supposed to represent ... f32
+                // and f64 are both supposed to represent reals and are thus
+                // considered equal (even if in practice f64 has more elements)
+                // This directly contradicts the FromPrimitive and ToPrimitive
+                // traits.
+                return true;
+            }
+
+            #[inline(always)]
+            fn to_subset_unchecked(&self) -> $subset {
+                return self.hi as $subset;
+            }
+
+            #[inline(always)]
+            fn from_subset(element: &$subset) -> Self {
+                // XXX remove .. as f64
+                return d64::from(*element as f64);
+            }
+        }
+    }
+);
+
+impl_superset!(f64 as d64);
+impl_superset!(f32 as d64);
+
+impl Field for d64 { }
+
+impl ComplexField for d64 {
+    type RealField = d64;
+
+    #[inline(always)]
+    fn from_real(re: d64) -> Self {
+        return re;
+    }
+
+    #[inline(always)]
+    fn real(self) -> d64 {
+        return self;
+    }
+
+    #[inline(always)]
+    fn imaginary(self) -> d64 {
+        return d64::from(0.0);
+    }
+
+    #[inline(always)]
+    fn modulus(self) -> d64 {
+        return funcs::abs(self);
+    }
+
+    #[inline(always)]
+    fn modulus_squared(self) -> d64 {
+        return arith::square_q(self);
+    }
+
+    #[inline]
+    fn argument(self) -> d64 {
+        if self.hi.is_sign_negative() {
+            return consts::PI;
+        } else {
+            return d64::from(0.0);
+        }
+    }
+
+    #[inline(always)]
+    fn norm1(self) -> d64 {
+        return funcs::abs(self);
+    }
+
+    #[inline(always)]
+    fn scale(self, factor: d64) -> Self {
+        return self * factor;
+    }
+
+    #[inline(always)]
+    fn unscale(self, factor: d64) -> Self {
+        return self / factor;
+    }
+
+    #[inline(always)]
+    fn floor(self) -> Self {
+        return round::floor(self);
+    }
+
+    #[inline(always)]
+    fn ceil(self) -> Self {
+        return round::ceil(self);
+    }
+
+    #[inline(always)]
+    fn round(self) -> Self {
+        return round::round(self);
+    }
+
+    #[inline(always)]
+    fn trunc(self) -> Self {
+        return round::trunc(self);
+    }
+
+    #[inline(always)]
+    fn fract(self) -> Self {
+        todo!()
+    }
+
+    #[inline]
+    fn mul_add(self, a: Self, b: Self) -> Self {
+        // There are two requirements that one has with fma: (1) it must be
+        // accurate without intermediate rounding and (2) it must be at least
+        // as fast as (a*b)+c. We have no way of satisfying both, so we go
+        // for performance.
+        return (self * a) + b;
+    }
+
+    #[inline(always)]
+    fn abs(self) -> d64 {
+        return funcs::abs(self);
+    }
+
+    #[inline(always)]
+    fn hypot(self,other:Self) -> d64 {
+        return roots::hypot(self, other);
+    }
+
+    #[inline(always)]
+    fn recip(self) -> Self {
+        return arith::reciprocal_q(self);
+    }
+
+    #[inline(always)]
+    fn conjugate(self) -> Self {
+        return self;
+    }
+
+    #[inline(always)]
+    fn sin(self) -> Self {
+        return circular::sin(self);
+    }
+
+    #[inline(always)]
+    fn cos(self) -> Self {
+        return circular::cos(self);
+    }
+
+    #[inline(always)]
+    fn sin_cos(self) -> (Self,Self) {
+        return circular::sincos(self);
+    }
+
+    #[inline(always)]
+    fn tan(self) -> Self {
+        return circular::tan(self);
+    }
+
+    #[inline(always)]
+    fn asin(self) -> Self {
+        return circular::asin(self);
+    }
+
+    #[inline(always)]
+    fn acos(self) -> Self {
+        return circular::acos(self);
+    }
+
+    #[inline(always)]
+    fn atan(self) -> Self {
+        return circular::atan(self);
+    }
+
+    #[inline(always)]
+    fn sinh(self) -> Self {
+        return hyperbolic::sinh(self);
+    }
+
+    #[inline(always)]
+    fn cosh(self) -> Self {
+        return hyperbolic::cosh(self);
+    }
+
+    #[inline(always)]
+    fn tanh(self) -> Self {
+        return hyperbolic::tanh(self);
+    }
+
+    #[inline(always)]
+    fn asinh(self) -> Self {
+        return hyperbolic::asinh(self);
+    }
+
+    #[inline(always)]
+    fn acosh(self) -> Self {
+        return hyperbolic::acosh(self);
+    }
+
+    #[inline(always)]
+    fn atanh(self) -> Self {
+        return hyperbolic::atanh(self);
+    }
+
+    #[inline(always)]
+    fn log(self, base:d64) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn log2(self) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn log10(self) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn ln(self) -> Self {
+        return exp::log(self);
+    }
+
+    #[inline(always)]
+    fn ln_1p(self) -> Self {
+        return exp::log1p(self);
+    }
+
+    #[inline(always)]
+    fn sqrt(self) -> Self {
+        return arith::sqrt_q(self);
+    }
+
+    #[inline(always)]
+    fn exp(self) -> Self {
+        return exp::exp(self);
+    }
+
+    #[inline(always)]
+    fn exp2(self) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn exp_m1(self) -> Self {
+        return exp::expm1(self);
+    }
+
+    #[inline(always)]
+    fn powi(self,n:i32) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn powf(self,n:d64) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn powc(self,n:Self) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn cbrt(self) -> Self {
+        todo!()
+    }
+
+    #[inline(always)]
+    fn is_finite(&self) -> bool {
+        return checks::is_finite(*self);
+    }
+
+    #[inline(always)]
+    fn try_sqrt(self) -> Option<Self> {
+        return Some(arith::sqrt_q(self));
+    }
+}
+
+impl RealField for d64 {
+    fn is_sign_positive(&self) -> bool {
+        return self.hi.is_sign_positive();
+    }
+
+    fn is_sign_negative(&self) -> bool {
+        return self.hi.is_sign_negative();
+    }
+
+    fn copysign(self, sign: Self) -> Self {
+        return funcs::copysign(self, sign);
+    }
+
+    fn max(self, other: Self) -> Self {
+        return funcs::max(self, other);
+    }
+
+    fn min(self, other: Self) -> Self {
+        return funcs::min(self, other);
+    }
+
+    fn clamp(self, min: Self, max: Self) -> Self {
+        todo!()
+    }
+
+    fn atan2(self, other: Self) -> Self {
+        return circular::atan2(self, other);
+    }
+
+    fn min_value() -> Option<Self> {
+        return Some(d64::MIN_POSITIVE);
+    }
+
+    fn max_value() -> Option<Self> {
+        return Some(d64::MAX);
+    }
+
+    fn pi() -> Self {
+        return consts::PI;
+    }
+
+    fn two_pi() -> Self {
+        todo!()
+    }
+
+    fn frac_pi_2() -> Self {
+        todo!()
+    }
+
+    fn frac_pi_3() -> Self {
+        todo!()
+    }
+
+    fn frac_pi_4() -> Self {
+        todo!()
+    }
+
+    fn frac_pi_6() -> Self {
+        todo!()
+    }
+
+    fn frac_pi_8() -> Self {
+        todo!()
+    }
+
+    fn frac_1_pi() -> Self {
+        todo!()
+    }
+
+    fn frac_2_pi() -> Self {
+        todo!()
+    }
+
+    fn frac_2_sqrt_pi() -> Self {
+        todo!()
+    }
+
+    fn e() -> Self {
+        todo!()
+    }
+
+    fn log2_e() -> Self {
+        todo!()
+    }
+
+    fn log10_e() -> Self {
+        todo!()
+    }
+
+    fn ln_2() -> Self {
+        todo!()
+    }
+
+    fn ln_10() -> Self {
+        todo!()
     }
 }
 
