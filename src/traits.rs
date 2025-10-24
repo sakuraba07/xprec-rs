@@ -521,7 +521,7 @@ impl ComplexField for Df64 {
 
     #[inline(always)]
     fn log(self, base:Df64) -> Self {
-        todo!()
+        return exp::log_base(self, base);
     }
 
     #[inline(always)]
@@ -566,17 +566,17 @@ impl ComplexField for Df64 {
 
     #[inline(always)]
     fn powi(self,n:i32) -> Self {
-        todo!()
+        return exp::powi(self, n);
     }
 
     #[inline(always)]
     fn powf(self,n:Df64) -> Self {
-        todo!()
+        return exp::powf(self, n);
     }
 
     #[inline(always)]
     fn powc(self,n:Self) -> Self {
-        todo!()
+        return exp::powf(self, n);
     }
 
     #[inline(always)]

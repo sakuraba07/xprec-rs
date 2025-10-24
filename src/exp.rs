@@ -75,6 +75,21 @@ pub fn exp2(x: Df64) -> Df64
     return exp(consts::LN_2 * x);
 }
 
+#[inline]
+pub fn powf(base: Df64, expo: Df64) -> Df64
+{
+    // XXX this misses all special case handling
+    return exp(expo * log(base));
+}
+
+#[inline]
+pub fn powi(base: Df64, expo: i32) -> Df64
+{
+    // Don't use squaring - terrible roundoff properties
+    // XXX this misses all special case handling
+    return exp(expo as f64 * log(base));
+}
+
 /// Returns significand and exponent of `exp`.
 ///
 /// Given some argument `x`, returns a tuple `(m, y)`, such that the value of
@@ -126,6 +141,7 @@ pub fn log(x: Df64) -> Df64
 }
 
 /// Logarithm base-2
+#[inline]
 pub fn log2(x: Df64) -> Df64
 {
     // Loses a little precision, but anyway seldom used
@@ -133,10 +149,18 @@ pub fn log2(x: Df64) -> Df64
 }
 
 /// Logarithm base-10
+#[inline]
 pub fn log10(x: Df64) -> Df64
 {
     // Loses a little precision, but anyway seldom used
     return log(x) * consts::LOG10_E;
+}
+
+/// Logarithm custom base
+pub fn log_base(x: Df64, base: Df64) -> Df64
+{
+    // Loses precision, but seldom used.
+    return log(x) / log(base);
 }
 
 /// Natural log of shifted argument `log(x + 1)` without intermediate rounding.
