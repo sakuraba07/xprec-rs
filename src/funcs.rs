@@ -78,6 +78,20 @@ pub fn max(a: Df64, b: Df64) -> Df64
     }
 }
 
+pub fn clamp(a: Df64, min_: Df64, max_: Df64) -> Df64
+{
+    if min_ <= a && a <= max_ {
+        return a;
+    } else {
+        assert!(min_ <= max_);
+        if !(min_ <= a) {
+            return min_;
+        } else {
+            return max_;
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

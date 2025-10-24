@@ -617,7 +617,7 @@ impl RealField for Df64 {
     }
 
     fn clamp(self, min: Self, max: Self) -> Self {
-        todo!()
+        return funcs::clamp(self, min, max);
     }
 
     #[inline(always)]
