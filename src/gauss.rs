@@ -1,3 +1,10 @@
+//! Gauss quadrature rules
+//!
+//! Algorithms are directly lifted from:
+//!  - SIAM J. SCI. COMPUT., Vol. 35, No. 2, p. A652
+//
+// Copyright (C) 2023-2025 Markus Wallerberger and others
+// SPDX-License-Identifier: MIT
 use super::Df64;
 use super::arith::*;
 use super::circular::*;

@@ -1,3 +1,14 @@
+//! Fast compensated (extended-precision) arithmetic
+//!
+//! Extends the precision of basic numerical types such as `f64` by
+//! compensating for the error. For convenience, we rovide the `Df64` type,
+//! which implements  all basic arithmetic traits, but does so in quadruple
+//! (double-double) precision. This is usually faster than emulated quad
+//! precision and multi-precision by several orders of magnitude.
+//
+// Copyright (C) 2023-2025 Markus Wallerberger and others
+// SPDX-License-Identifier: MIT
+
 use core::f64;
 use std::ops::{Add, Sub};
 use num_traits::Zero;
@@ -23,13 +34,13 @@ pub struct Compensated<H, L>
 /// as follows:
 ///
 ///   | (op)       | f64 f64 | error | Df64 f64 | error | Df64 Df64 | error |
-///   |------------|--------:|------:|--------:|------:|--------:|------:|
-///   | add_fast   |    3 fl |   0u² |    7 fl |   2u² |   17 fl |   3u² |
-///   | + -        |    6 fl |   0u² |   10 fl |   2u² |   20 fl |   3u² |
-///   | *          |    2 fl |   0u² |    6 fl |   2u² |    9 fl |   4u² |
-///   | /          |   3* fl |   1u² |   7* fl |   3u² |  28* fl |   6u² |
-///   | reciprocal |   3* fl |   1u² |         |       |  19* fl | 2.3u² |
-///   | sqrt       |   4* fl |   2u² |         |       |   8* fl |   4u² |
+///   |------------|--------:|------:|---------:|------:|----------:|------:|
+///   | add_fast   |    3 fl |   0u² |     7 fl |   2u² |     17 fl |   3u² |
+///   | + -        |    6 fl |   0u² |    10 fl |   2u² |     20 fl |   3u² |
+///   | *          |    2 fl |   0u² |     6 fl |   2u² |      9 fl |   4u² |
+///   | /          |   3* fl |   1u² |    7* fl |   3u² |    28* fl |   6u² |
+///   | reciprocal |   3* fl |   1u² |          |       |    19* fl | 2.3u² |
+///   | sqrt       |   4* fl |   2u² |          |       |     8* fl |   4u² |
 ///
 /// The error bounds are mostly tight analytical bounds (except for
 /// divisions).[^1]  An asterisk indicates the need for one or two double
@@ -191,14 +202,14 @@ pub trait SubFast<T = Self> : Sub<T>{
 // Public modules
 pub mod arith;
 pub mod checks;
-pub mod consts;
-pub mod convert;
-pub mod funcs;
 pub mod gauss;
 
 // Private modules
 mod circular;
+mod consts;
+mod convert;
 mod exp;
+mod funcs;
 mod hyperbolic;
 mod roots;
 mod round;

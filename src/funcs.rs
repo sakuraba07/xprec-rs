@@ -9,18 +9,6 @@ pub fn ldexp(a: Df64, n: i32) -> Df64
 }
 
 #[inline]
-pub fn scalbn(a: Df64, n: i32) -> Df64
-{
-    return Df64 {hi: libm::scalbn(a.hi, n), lo: libm::scalbn(a.lo, n)};
-}
-
-#[inline]
-pub fn ilogb(x: Df64) -> i32
-{
-    return libm::ilogb(x.hi);
-}
-
-#[inline]
 pub fn fract(x: Df64) -> Df64
 {
     // The fractional part is simply the fractional part of both hi and lo.

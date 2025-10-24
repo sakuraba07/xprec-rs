@@ -1,3 +1,8 @@
+//! Floating point checks.
+//
+// Copyright (C) 2023-2025 Markus Wallerberger and others
+// SPDX-License-Identifier: MIT
+
 use std::num::FpCategory;
 use approx;
 use crate::Df64;

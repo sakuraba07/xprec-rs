@@ -1,12 +1,12 @@
-/* Implementations.
- *
- * Most of the basic numerical algorithms are directly lifted from:
- *  - M. Joldes, et al., ACM Trans. Math. Softw. 44, 1-27 (2018)
- *  - Karp, High Precision Division and Square Root (1993)
- *
- * Copyright (C) 2023-2025 Markus Wallerberger and others
- * SPDX-License-Identifier: MIT
- */
+//! Basic algorithms of compensated arithmetic.
+//!
+//! Most of the basic numerical algorithms are directly lifted from:
+//!  - M. Joldes, et al., ACM Trans. Math. Softw. 44, 1-27 (2018)
+//!  - Karp, High Precision Division and Square Root (1993)
+//
+// Copyright (C) 2023-2025 Markus Wallerberger and others
+// SPDX-License-Identifier: MIT
+
 use super::Df64;
 
 // ---------------------------------------------------------------------------
