@@ -1,7 +1,6 @@
-use super::Df64;
+use super::*;
 use super::arith::*;
 use super::checks::*;
-use super::funcs;
 use super::utils::reciprocal_factorial;
 use libm::ldexp;
 
@@ -69,6 +68,13 @@ pub fn expm1(x: Df64) -> Df64
     }
 }
 
+#[inline]
+pub fn exp2(x: Df64) -> Df64
+{
+    // XXX this is not great, since it loses precision for large values
+    return exp(consts::LN_2 * x);
+}
+
 /// Returns significand and exponent of `exp`.
 ///
 /// Given some argument `x`, returns a tuple `(m, y)`, such that the value of
@@ -117,6 +123,20 @@ pub fn log(x: Df64) -> Df64
     let corr = mul_pow2(subfast_qq(x, x0) / addfast_qq(x, x0), 2.0);
     let log_x = log_x0 + corr;
     return log_x;
+}
+
+/// Logarithm base-2
+pub fn log2(x: Df64) -> Df64
+{
+    // Loses a little precision, but anyway seldom used
+    return log(x) * consts::LOG2_E;
+}
+
+/// Logarithm base-10
+pub fn log10(x: Df64) -> Df64
+{
+    // Loses a little precision, but anyway seldom used
+    return log(x) * consts::LOG10_E;
 }
 
 /// Natural log of shifted argument `log(x + 1)` without intermediate rounding.
@@ -400,6 +420,8 @@ mod test {
         while x.hi > 1e-290 {
             check_unary(exp, |x| x.exp(), x, 1.0);
             check_unary(exp, |x| x.exp(), -x, 1.0);
+            check_unary(exp2, |x| x.exp2(), x, 1.0);
+            check_unary(exp2, |x| x.exp2(), -x, 1.0);
             x *= 0.947;
         }
 
@@ -412,6 +434,10 @@ mod test {
             if x.hi < 670.0 {
                 check_unary(exp, |x| x.exp(), -x, 1.0);
             }
+
+            // XXX
+            check_unary(exp2, |x| x.exp2(), x, 1000.0);
+            check_unary(exp2, |x| x.exp2(), -x, 1000.0);
             x *= 1.0041;
         }
 
@@ -472,6 +498,8 @@ mod test {
         let mut x = Df64::ONE;
         while x.hi > 1e-290 {
             check_unary(log, |x| x.ln(), x, 1.0);
+            check_unary(log2, |x| x.log2(), x, 3.0);
+            check_unary(log10, |x| x.log10(), x, 3.0);
             x *= 0.947;
         }
 
@@ -479,6 +507,8 @@ mod test {
         x = Df64::ONE;
         while x.hi < 1e300 {
             check_unary(log, |x| x.ln(), x, 1.0);
+            check_unary(log2, |x| x.log2(), x, 1.0);
+            check_unary(log10, |x| x.log10(), x, 1.0);
             x *= 1.13;
         }
     }

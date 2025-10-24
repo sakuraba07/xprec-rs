@@ -526,12 +526,12 @@ impl ComplexField for Df64 {
 
     #[inline(always)]
     fn log2(self) -> Self {
-        todo!()
+        return exp::log2(self);
     }
 
     #[inline(always)]
     fn log10(self) -> Self {
-        todo!()
+        return exp::log10(self);
     }
 
     #[inline(always)]
@@ -556,7 +556,7 @@ impl ComplexField for Df64 {
 
     #[inline(always)]
     fn exp2(self) -> Self {
-        todo!()
+        return exp::exp2(self);
     }
 
     #[inline(always)]
