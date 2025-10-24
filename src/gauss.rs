@@ -45,7 +45,7 @@ fn plx(ell: i64, x: Df64) -> (Df64, Df64)
     assert!(ell >= 1);
 
     // P(0, x) = 1, P(1, x) = x
-    let mut p0 = Df64::from(1.0);
+    let mut p0 = Df64::ONE;
     let mut p1 = x;
 
     // Bonnet's recursion formula
@@ -86,8 +86,8 @@ mod test {
         use approx::assert_abs_diff_eq;
 
         // check Legendre quad for n = 5
-        let mut x: [Df64; 5] = [Df64::from(0.0); 5];
-        let mut w: [Df64; 5] = [Df64::from(0.0); 5];
+        let mut x: [Df64; 5] = [Df64::ZERO; 5];
+        let mut w: [Df64; 5] = [Df64::ZERO; 5];
 
         gauss_legendre(&mut x, &mut w);
         for i in 0..5 {

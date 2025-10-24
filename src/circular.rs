@@ -157,7 +157,7 @@ pub fn asin(x: Df64) -> Df64
     }
 
     // This is where Taylor fails
-    if abs(x) == Df64::from(1.0) {
+    if abs(x) == Df64::ONE {
         return copysign(consts::PI_HALF, x);
     }
 
@@ -181,8 +181,8 @@ pub fn acos(x: Df64) -> Df64
     }
 
     // This is where Taylor fails
-    if x == Df64::from(1.0) {
-        return Df64::from(0.0);
+    if x == Df64::ONE {
+        return Df64::ZERO;
     } else if x == Df64::from(-1.0) {
         return consts::PI;
     }
@@ -227,7 +227,7 @@ pub fn atan2(y: Df64, x: Df64) -> Df64
         return Df64::NAN;
     } else if is_zero(y) {
         if x.hi >= 0.0 {
-            return Df64::from(0.0);
+            return Df64::ZERO;
         } else {
             return consts::PI;
         }

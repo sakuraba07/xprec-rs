@@ -106,12 +106,12 @@ mod test
     {
         let u = 2e-32;
 
-        assert!(trunc(Df64 {hi: 0.0, lo: 0.0}) == Df64::from(0.0));
+        assert!(trunc(Df64 {hi: 0.0, lo: 0.0}) == Df64::ZERO);
         assert!(trunc(Df64 {hi: 2.5, lo: u/4.0}) == Df64::from(2.0));
         assert!(trunc(Df64 {hi: -2.3, lo: u/4.0}) == Df64::from(-2.0));
 
         assert!(trunc(Df64 {hi: 2.0, lo: u/2.0}) == Df64::from(2.0));
-        assert!(trunc(Df64 {hi: 2.0, lo: -u/2.0}) == Df64::from(1.0));
+        assert!(trunc(Df64 {hi: 2.0, lo: -u/2.0}) == Df64::ONE);
         assert!(trunc(Df64 {hi: -2.0, lo: u/2.0}) == Df64::from(-1.0));
         assert!(trunc(Df64 {hi: -2.0, lo: -u/2.0}) == Df64::from(-2.0));
     }
@@ -121,7 +121,7 @@ mod test
     {
         let u = 2e-32;
 
-        assert!(ceil(Df64 {hi: 0.0, lo: 0.0}) == Df64::from(0.0));
+        assert!(ceil(Df64 {hi: 0.0, lo: 0.0}) == Df64::ZERO);
         assert!(ceil(Df64 {hi: 2.5, lo: u/4.0}) == Df64::from(3.0));
         assert!(ceil(Df64 {hi: -2.3, lo: u/4.0}) == Df64::from(-2.0));
 
@@ -136,7 +136,7 @@ mod test
     {
         let u = 2e-32;
 
-        assert!(round(Df64 {hi: 0.0, lo: 0.0}) == Df64::from(0.0));
+        assert!(round(Df64 {hi: 0.0, lo: 0.0}) == Df64::ZERO);
         assert!(round(Df64 {hi: 2.5, lo: u/4.0}) == Df64::from(3.0));
         assert!(round(Df64 {hi: 2.5, lo: 0.0}) == Df64::from(3.0));
         assert!(round(Df64 {hi: 2.5, lo: -u/3.0}) == Df64::from(2.0));

@@ -86,7 +86,7 @@ mod test {
         assert!(is_infinite(hypot(Df64::INFINITY, Df64::INFINITY)));
 
         check_binary(hypot, |x,y| x.hypot(&y),
-                     Df64::from(1.0), Df64::from(1.0), 1.5);
+                     Df64::ONE, Df64::ONE, 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
                      Df64::from(3.0), Df64::from(-10000.0), 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
@@ -113,13 +113,13 @@ mod test {
     #[test]
     fn test_roots_q()
     {
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x > Df64::from(1e-290) {
             check_unary(inv_sqrt, |x| 1.0 / x.sqrt(), x, 2.0);
             x = mul_qd(x, 0.992);
         }
 
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x < Df64::from(1e290) {
             check_unary(inv_sqrt, |x| 1.0 / x.sqrt(), x, 2.0);
             x = div_qd(x, 0.992);

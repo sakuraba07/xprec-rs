@@ -363,7 +363,7 @@ impl ComplexField for Df64 {
 
     #[inline(always)]
     fn imaginary(self) -> Df64 {
-        return Df64::from(0.0);
+        return Df64::ZERO;
     }
 
     #[inline(always)]
@@ -381,7 +381,7 @@ impl ComplexField for Df64 {
         if self.hi.is_sign_negative() {
             return consts::PI;
         } else {
-            return Df64::from(0.0);
+            return Df64::ZERO;
         }
     }
 
@@ -704,8 +704,8 @@ mod test
     #[test]
     fn test_traits()
     {
-        let x = Df64::from(1.0) * 2.0;
-        let y = Df64::from(1.0) / 4.0;
+        let x = Df64::ONE * 2.0;
+        let y = Df64::ONE / 4.0;
         assert_eq!(1.0 + x * y - 2.0, Df64::from(-0.5));
     }
 

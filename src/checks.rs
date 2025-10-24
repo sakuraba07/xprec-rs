@@ -161,7 +161,7 @@ mod test {
 
         // Check max exp
         check_class(funcs::ldexp(Df64::from(0.9), Df64::MAX_EXP), FpCategory::Normal);
-        check_class(funcs::ldexp(Df64::from(1.0), Df64::MAX_EXP), FpCategory::Infinite);
+        check_class(funcs::ldexp(Df64::ONE, Df64::MAX_EXP), FpCategory::Infinite);
 
         // Check min positive
         check_class(Df64::MIN_POSITIVE, FpCategory::Normal);
@@ -174,15 +174,15 @@ mod test {
         check_class(Df64::NAN / Df64::NAN, FpCategory::Nan);
 
         // check zero
-        check_class(Df64::from(0.0), FpCategory::Zero);
+        check_class(Df64::ZERO, FpCategory::Zero);
         check_class(Df64::from(-0.0), FpCategory::Zero);
     }
 
     #[test]
     fn test_isclose()
     {
-        let zero = Df64::from(0.0);
-        let one = Df64::from(1.0);
+        let zero = Df64::ZERO;
+        let one = Df64::ONE;
         assert!(isclose_qq(zero, zero, 0.0, 0.0));
         assert!(isclose_qq(one, one + 1e-30, 1e-29, 0.0));
         assert!(isclose_qq(one, one + 1e-30, 0.0, 1e-29));

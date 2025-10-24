@@ -568,7 +568,7 @@ mod test
     #[test]
     fn test_arith_q()
     {
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x > Df64::from(1e-290) {
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
             check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
@@ -576,7 +576,7 @@ mod test
             x = mul_qd(x, 0.992);
         }
 
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x < Df64::from(1e300) {
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
             check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);

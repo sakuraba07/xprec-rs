@@ -19,7 +19,7 @@ pub fn exp(x: Df64) -> Df64
         } else if x.hi > 0.0 {
             return Df64::INFINITY;
         } else {
-            return Df64::from(0.0);
+            return Df64::ZERO;
         }
     }
 
@@ -393,7 +393,7 @@ mod test {
         assert!(is_nan(exp(Df64::NAN)));
 
         // simple vals
-        check_unary(exp, |x| x.exp(), Df64::from(0.0), 1.0);
+        check_unary(exp, |x| x.exp(), Df64::ZERO, 1.0);
 
         // small values
         let mut x = Df64::from(0.25);
@@ -403,7 +403,7 @@ mod test {
             x *= 0.947;
         }
 
-        check_unary(exp, |x| x.exp(), Df64::from(1.0), 1.0);
+        check_unary(exp, |x| x.exp(), Df64::ONE, 1.0);
 
         // large values
         x = Df64::from(0.25);
@@ -431,8 +431,8 @@ mod test {
         assert!(is_nan(expm1(Df64::NAN)));
 
         // simple vals
-        check_unary(expm1, |x| x.exp_m1(), Df64::from(0.0), 1.0);
-        check_unary(expm1, |x| x.exp_m1(), Df64::from(1.0), 1.0);
+        check_unary(expm1, |x| x.exp_m1(), Df64::ZERO, 1.0);
+        check_unary(expm1, |x| x.exp_m1(), Df64::ONE, 1.0);
 
         // small values
         // XXX here we have to work on the kernel
@@ -459,24 +459,24 @@ mod test {
     {
         // special values
         assert!(is_infinite(log(Df64::INFINITY)));
-        assert!(is_infinite(log(Df64::from(0.0))));
+        assert!(is_infinite(log(Df64::ZERO)));
         assert!(is_nan(log(Df64::from(-0.1))));
         assert!(is_nan(log(Df64::NEG_INFINITY)));
         assert!(is_nan(log(Df64::NAN)));
 
         // simple vals
-        check_unary(log, |x| x.ln(), Df64::from(1.0), 1.0);
+        check_unary(log, |x| x.ln(), Df64::ONE, 1.0);
         check_unary(log, |x| x.ln(), Df64::from(3.0), 1.0);
 
         // small values
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x.hi > 1e-290 {
             check_unary(log, |x| x.ln(), x, 1.0);
             x *= 0.947;
         }
 
         // large values
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x.hi < 1e300 {
             check_unary(log, |x| x.ln(), x, 1.0);
             x *= 1.13;
@@ -494,8 +494,8 @@ mod test {
         assert!(is_nan(log1p(Df64::NAN)));
 
         // simple vals
-        check_unary(log1p, |x| x.ln_1p(), Df64::from(0.0), 0.0);
-        check_unary(log1p, |x| x.ln_1p(), Df64::from(1.0), 1.5);
+        check_unary(log1p, |x| x.ln_1p(), Df64::ZERO, 0.0);
+        check_unary(log1p, |x| x.ln_1p(), Df64::ONE, 1.5);
 
         // small values
         let mut x = Df64::from(0.99);
@@ -506,7 +506,7 @@ mod test {
         }
 
         // large values
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x.hi < 1e300 {
             check_unary(log1p, |x| x.ln_1p(), x, 1.0);
             x *= 1.13;

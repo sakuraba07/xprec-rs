@@ -82,7 +82,7 @@ pub fn tanh(x: Df64) -> Df64
             return Df64::NAN;
         } else {
             // Asymptotically, we have +- 1
-            return copysign(Df64::from(1.0), x);
+            return copysign(Df64::ONE, x);
         }
     }
 
@@ -120,7 +120,7 @@ pub fn asinh(x: Df64) -> Df64
     //     asinh(x) = log(sqrt(1 + x^2) + x)
     //
     let xx = abs(x);
-    let arg = addfast_qq(hypot(Df64::from(1.0), xx), xx);
+    let arg = addfast_qq(hypot(Df64::ONE, xx), xx);
     return copysign(log(arg), x);
 }
 
@@ -152,7 +152,7 @@ pub fn atanh(x: Df64) -> Df64
 
     // Special value
     let xx = abs(x);
-    if xx == Df64::from(1.0) {
+    if xx == Df64::ONE {
         return copysign(Df64::INFINITY, x);
     }
 
@@ -180,10 +180,10 @@ mod test{
         assert!(is_nan(cosh(Df64::NAN)));
 
         // simple vals
-        check_unary(cosh, |x| x.cosh(), Df64::from(0.0), 1.0);
+        check_unary(cosh, |x| x.cosh(), Df64::ZERO, 1.0);
 
         // small values
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x.hi > 1e-290 {
             check_unary(cosh, |x| x.cosh(), x, 1.0);
             check_unary(cosh, |x| x.cosh(), -x, 1.0);
@@ -191,7 +191,7 @@ mod test{
         }
 
         // large values
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x.hi < COSH_MAX {
             check_unary(cosh, |x| x.cosh(), x, 1.0);
             check_unary(cosh, |x| x.cosh(), -x, 1.0);
@@ -208,14 +208,14 @@ mod test{
         assert!(is_infinite(sinh(Df64::from(1000.0))));
         assert!(is_infinite(sinh(Df64::INFINITY)));
         assert!(is_infinite(sinh(Df64::NEG_INFINITY)));
-        assert!(sinh(Df64::NEG_INFINITY) < Df64::from(0.0));
+        assert!(sinh(Df64::NEG_INFINITY) < Df64::ZERO);
         assert!(is_nan(sinh(Df64::NAN)));
 
         // simple vals
-        check_unary(sinh, |x| x.sinh(), Df64::from(0.0), 1.0);
+        check_unary(sinh, |x| x.sinh(), Df64::ZERO, 1.0);
 
         // small values
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x.hi > 1e-290 {
             check_unary(sinh, |x| x.sinh(), x, 2.0);
             check_unary(sinh, |x| x.sinh(), -x, 2.0);
@@ -223,7 +223,7 @@ mod test{
         }
 
         // large values
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x.hi < COSH_MAX {
             check_unary(sinh, |x| x.sinh(), x, 1.0);
             check_unary(sinh, |x| x.sinh(), -x, 1.0);
@@ -237,17 +237,17 @@ mod test{
     fn test_tanh()
     {
         // special values
-        assert!(tanh(Df64::from(1000.0)) == Df64::from(1.0));
+        assert!(tanh(Df64::from(1000.0)) == Df64::ONE);
         assert!(tanh(Df64::from(-1000.0)) == Df64::from(-1.0));
-        assert!(tanh(Df64::INFINITY) == Df64::from(1.0));
+        assert!(tanh(Df64::INFINITY) == Df64::ONE);
         assert!(tanh(-Df64::INFINITY) == Df64::from(-1.0));
         assert!(is_nan(tanh(Df64::NAN)));
 
         // simple vals
-        check_unary(tanh, |x| x.tanh(), Df64::from(0.0), 1.0);
+        check_unary(tanh, |x| x.tanh(), Df64::ZERO, 1.0);
 
         // small values
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x.hi > 1e-290 {
             check_unary(tanh, |x| x.tanh(), x, 2.0);
             check_unary(tanh, |x| x.tanh(), -x, 2.0);
@@ -255,7 +255,7 @@ mod test{
         }
 
         // large values
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x.hi < 10.0 * COSH_MAX {
             check_unary(tanh, |x| x.tanh(), x, 2.0);
             check_unary(tanh, |x| x.tanh(), -x, 2.0);
@@ -267,11 +267,11 @@ mod test{
     fn test_arc()
     {
         // small values
-        let mut x = Df64::from(1.0);
+        let mut x = Df64::ONE;
         while x.hi > 1e-290 {
             check_unary(asinh, |x| x.asinh(), x, 2.0);
             check_unary(asinh, |x| x.asinh(), -x, 2.0);
-            if x < Df64::from(1.0) {
+            if x < Df64::ONE {
                 check_unary(atanh, |x| x.atanh(), x, 2.5);
                 check_unary(atanh, |x| x.atanh(), -x, 2.5);
             }
@@ -280,7 +280,7 @@ mod test{
 
         // large values
         // XXX not entire range covered
-        x = Df64::from(1.0);
+        x = Df64::ONE;
         while x.hi < f64::MAX / 4.0 {
             check_unary(asinh, |x| x.asinh(), x, 2.0);
             check_unary(asinh, |x| x.asinh(), -x, 2.0);

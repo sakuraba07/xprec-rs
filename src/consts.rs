@@ -66,6 +66,12 @@ impl Df64 {
     /// a normal number, i.e., does not underflow or go into the subnormals.
     pub const MIN_EXP: i32 = f64::MIN_EXP + f64::MANTISSA_DIGITS as i32 - 2;
 
+    /// Zero
+    pub const ZERO: Df64 = Df64 {hi: 0.0, lo: 0.0};
+
+    /// One
+    pub const ONE: Df64 = Df64 {hi: 1.0, lo: 0.0};
+
 }
 
 pub const PI: Df64 = Df64 {hi: 3.141592653589793, lo: 1.2246467991473532e-16};
