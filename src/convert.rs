@@ -77,6 +77,21 @@ convert!(from_u16     u16   Df64);
 convert!(from_u32     u32   Df64);
 convert!(from_u64     u64   Df64);
 
+// TRAITS
+
+impl From<Df64> for f64 {
+    fn from(src: Df64) -> f64 {
+        src.hi
+    }
+}
+
+impl From<f64> for Df64 {
+    fn from(src: f64) -> Df64 {
+        Df64 {hi: src, lo: 0.0}
+    }
+}
+
+
 impl num_traits::ToPrimitive for Df64 {
     #[inline] fn to_isize(&self) -> Option<isize> { return try_to_isize(*self); }
     #[inline] fn to_i8(&self)    -> Option<i8>    { return try_to_i8(*self); }

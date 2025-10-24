@@ -1,9 +1,11 @@
 use core::f64;
 use std::ops::{Add, Sub};
+use num_traits::Zero;
 
 /// Type for compensated arithmetic.
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
-pub struct Compensated<H, L> {
+pub struct Compensated<H, L>
+{
     hi: H,
     lo: L
 }
@@ -45,6 +47,26 @@ pub struct Compensated<H, L> {
 ///      observed error is 6u². In double by double division, we expect u². We
 ///      report the largest observed error.
 pub type Df64 = Compensated<f64, f64>;
+
+impl Df64 {
+
+    /// Construct new compensated result with zero compensation.
+    #[inline(always)]
+    pub const fn new(x: f64) -> Df64 {
+        return Df64 { hi: x, lo: 0.0 };
+    }
+
+    /// Construct new compensated result for given compensation
+    ///
+    /// **Safety**: you must ensure that `lo` is a valid compensation term for
+    /// `hi`, i.e., for any finite `hi` it must hold that `hi + lo == hi`.
+    #[inline(always)]
+    pub const unsafe fn new_full(hi: f64, lo: f64) -> Df64 {
+        debug_assert!(hi + lo == hi || !hi.is_finite());
+        return Df64 { hi: hi, lo: lo };
+    }
+
+}
 
 /// Arithmetic with compensated errors.
 ///
@@ -165,33 +187,23 @@ pub trait SubFast<T = Self> : Sub<T>{
     unsafe fn sub_fast(self, small: T) -> Self::Output;
 }
 
-#[cfg(test)]
-mod test_utils;
-mod utils;
 
+// Public modules
 pub mod arith;
-pub mod circular;
 pub mod checks;
 pub mod consts;
 pub mod convert;
-pub mod exp;
 pub mod funcs;
 pub mod gauss;
-pub mod hyperbolic;
-pub mod roots;
-pub mod round;
+
+// Private modules
+mod circular;
+mod exp;
+mod hyperbolic;
+mod roots;
+mod round;
 mod traits;
+mod utils;
 
-// Convert to float
-impl From<Df64> for f64 {
-    fn from(src: Df64) -> f64 {
-        src.hi
-    }
-}
-
-// Convert from float
-impl From<f64> for Df64 {
-    fn from(src: f64) -> Df64 {
-        Df64 {hi: src, lo: 0.0}
-    }
-}
+#[cfg(test)]
+mod test_utils;
