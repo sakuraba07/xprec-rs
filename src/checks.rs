@@ -1,5 +1,5 @@
 use std::num::FpCategory;
-use isclose;
+use approx;
 use crate::d64;
 use crate::arith;
 
@@ -76,28 +76,56 @@ pub fn isclose_qq(a: d64, b: d64, atol: f64, rtol: f64) -> bool
     }
 }
 
-impl isclose::IsClose for d64 {
-    type Tolerance = f64;
-    const ZERO_TOL: f64 = 0.0;
-
-    // A useful default absolute tolerance is one at the floor of the double
-    // range. We also ignore denormal numbers.
-    const ABS_TOL: f64 = d64::MIN_POSITIVE.hi;
-
-    // A small multiple of the machine epsilon is the right default here. We
-    // scale this by 3 because this is the largest error we observe from any
-    // of the arithmetic operations.
-    const REL_TOL: f64 = 3.0 * d64::EPSILON.hi;
+impl approx::AbsDiffEq for d64 {
+    type Epsilon = f64;
 
     #[inline(always)]
-    fn is_close_tol(&self, rhs: &d64, rel_tol: &f64, abs_tol: &f64) -> bool {
-        return isclose_qq(*self, *rhs, *abs_tol, *rel_tol);
+    fn default_epsilon() -> Self::Epsilon {
+        // A useful default absolute tolerance is one at the floor of the
+        // double range, since otherwise it is not clear what the scale is.
+        // We also ignore denormal numbers.
+        return d64::MIN_POSITIVE.hi;
+    }
+
+    #[inline(always)]
+    fn abs_diff_eq(&self, other: &Self, epsilon: f64) -> bool {
+        return isclose_qq(*self, *other, epsilon, 0.0);
+    }
+}
+
+impl approx::RelativeEq for d64 {
+    #[inline(always)]
+    fn default_max_relative() -> Self::Epsilon {
+        // A small multiple of the machine epsilon is the right default here.
+        // We scale this by 3 because this is the largest error we observe from
+        // any of the arithmetic operations.
+        return 3.0 * d64::EPSILON.hi;
+    }
+
+    #[inline(always)]
+    fn relative_eq(&self, other: &Self, epsilon: f64, max_relative: f64) -> bool {
+        return isclose_qq(*self, *other, epsilon, max_relative);
+    }
+}
+
+impl approx::UlpsEq for d64 {
+    #[inline(always)]
+    fn default_max_ulps() -> u32 {
+        // We use 3 because this is the largest error we observe from
+        // any of the arithmetic operations.
+        return 3;
+    }
+
+    #[inline(always)]
+    fn ulps_eq(&self, other: &Self, epsilon: f64, max_ulps: u32) -> bool {
+        let rtol = max_ulps as f64 * d64::EPSILON.hi;
+        return isclose_qq(*self, *other, epsilon, rtol);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use isclose::assert_is_close;
+    use approx::assert_relative_eq;
     use super::*;
     use crate::funcs;
 
@@ -161,7 +189,7 @@ mod test {
         assert!(!isclose_qq(one, one - 1e-30, 1e-31, 0.0));
         assert!(!isclose_qq(one, one - 1e-30, 0.0, 1e-31));
 
-        assert_is_close!(one, one + 3e-32);
+        assert_relative_eq!(one, one + 3e-32);
     }
 
 }

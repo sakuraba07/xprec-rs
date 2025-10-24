@@ -83,7 +83,7 @@ mod test {
     #[test]
     fn test_leg5()
     {
-        use isclose::assert_is_close;
+        use approx::assert_abs_diff_eq;
 
         // check Legendre quad for n = 5
         let mut x: [d64; 5] = [d64::from(0.0); 5];
@@ -91,8 +91,8 @@ mod test {
 
         gauss_legendre(&mut x, &mut w);
         for i in 0..5 {
-            assert_is_close!(x[i], X5[i], abs_tol=d64::EPSILON.hi);
-            assert_is_close!(w[i], W5[i], abs_tol=2.0*d64::EPSILON.hi);
+            assert_abs_diff_eq!(x[i], X5[i], epsilon=d64::EPSILON.hi);
+            assert_abs_diff_eq!(w[i], W5[i], epsilon=2.0*d64::EPSILON.hi);
         }
     }
 }

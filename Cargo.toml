@@ -28,7 +28,7 @@ exclude = [
 libm = "0.2"
 num-traits = "0.2"
 simba = "0.9"  # unsure
-isclose = "0.3"
+approx = "0.5"
 
 [dev-dependencies]
 rug = "1.28"
