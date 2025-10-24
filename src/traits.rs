@@ -422,7 +422,7 @@ impl ComplexField for Df64 {
 
     #[inline(always)]
     fn fract(self) -> Self {
-        todo!()
+        return funcs::fract(self);
     }
 
     #[inline]

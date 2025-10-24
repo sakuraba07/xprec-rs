@@ -21,6 +21,18 @@ pub fn ilogb(x: Df64) -> i32
 }
 
 #[inline]
+pub fn fract(x: Df64) -> Df64
+{
+    // The fractional part is simply the fractional part of both hi and lo.
+    // In case x.hi is not integer, we have that fract(x.lo) is a true
+    // compensate, and we could directly construct Df64 from the two parts.
+    // However, if x.hi is integer, then its fractional part is zero, and
+    // we have to renormalize, but can use fast addition because of the zero
+    // hi part.
+    return arith::addfast_dd(x.hi.fract(), x.lo.fract());
+}
+
+#[inline]
 pub fn copysign(mag: Df64, sgn: Df64) -> Df64
 {
     // The sign is determined by the hi part, however, the sign of hi and lo
@@ -63,5 +75,24 @@ pub fn max(a: Df64, b: Df64) -> Df64
         b
     } else {
         a
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::test_utils::*;
+
+    #[test]
+    fn test_fract()
+    {
+        let mut x = Df64::from(1e-30);
+        while x.hi < 1e14 {
+            let scale = x.hi.abs().max(1.0);
+            check_unary(fract, |x| x.fract(), x, scale);
+            check_unary(fract, |x| x.fract(), -x, scale);
+            x *= 1.0141;
+        }
+
     }
 }
