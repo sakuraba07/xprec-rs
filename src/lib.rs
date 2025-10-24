@@ -1,13 +1,51 @@
 use core::f64;
 use std::ops::{Add, Sub};
 
-
-#[allow(non_camel_case_types)]
+/// Type for compensated arithmetic.
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
-pub struct d64 {
-    hi: f64,
-    lo: f64
+pub struct Compensated<T> {
+    hi: T,
+    lo: T
 }
+
+/// Compensated f64 (emulated quad precision) type.
+///
+/// Emulates quadruple precision with a pair of doubles.  This roughly doubles
+/// the mantissa bits (and thus squares the precision of double).  The range
+/// is almost the same as double, with a larger area of denormalized numbers.
+/// This is also called double-double arithmetic, compensated arithmetic, or
+/// Dekker arithmetic.
+///
+/// The rough cost in floating point operations (fl) and relative error as
+/// multiples of u² = 1.32e-32 (round-off error or half the machine epsilon) is
+/// as follows:
+///
+///   | (op)       | f64 f64 | error | d64 f64 | error | d64 d64 | error |
+///   |------------|--------:|------:|--------:|------:|--------:|------:|
+///   | add_fast   |    3 fl |   0u² |    7 fl |   2u² |   17 fl |   3u² |
+///   | + -        |    6 fl |   0u² |   10 fl |   2u² |   20 fl |   3u² |
+///   | *          |    2 fl |   0u² |    6 fl |   2u² |    9 fl |   4u² |
+///   | /          |   3* fl |   1u² |   7* fl |   3u² |  28* fl |   6u² |
+///   | reciprocal |   3* fl |   1u² |         |       |  19* fl | 2.3u² |
+///   | sqrt       |   4* fl |   2u² |         |       |   8* fl |   4u² |
+///
+/// The error bounds are mostly tight analytical bounds (except for
+/// divisions).[^1]  An asterisk indicates the need for one or two double
+/// divisions, which are about an order of magnitude more expensive than
+/// regular flops on a modern CPU.
+///
+/// The table can be distilled into two rules of thumb: double-double
+/// arithmetic roughly doubles the number of significant digits at the cost of
+/// a roughly 15x slowdown compared to double arithmetic.
+///
+/// [^1]: M. Joldes, et al., ACM Trans. Math. Softw. 44, 1-27 (2018) and
+///      J.-M. Muller and L. Rideau, ACM Trans. Math. Softw. 48, 1, 9 (2022).
+///      The flop count has been reduced by 3 for divisons/reciprocals.
+///      In the case of double-double division, the bound is 10u² but largest
+///      observed error is 6u². In double by double division, we expect u². We
+///      report the largest observed error.
+#[allow(non_camel_case_types)]
+pub type d64 = Compensated<f64>;
 
 /// Arithmetic with compensated errors.
 ///
