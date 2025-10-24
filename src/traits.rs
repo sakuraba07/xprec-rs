@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 use super::{d64, AddFast, SubFast, CompensatedArithmetic};
-use super::{arith, round};
+use super::{arith, funcs, round};
 use std::ops::*;
 use num_traits::*;
 use simba::simd::SimdValue;
@@ -209,6 +209,18 @@ impl Inv for d64 {
     }
 }
 
+impl Num for d64 {
+    type FromStrRadixErr = <f64 as Num>::FromStrRadixErr;
+
+    fn from_str_radix(str: &str, radix: u32)
+            -> Result<Self, Self::FromStrRadixErr>
+    {
+        // XXX precision is insufficient
+        let x64 = f64::from_str_radix(str, radix)?;
+        return Ok(d64::from(x64));
+    }
+}
+
 // XXX we use impl_primitive_simd_value_for_scalar! for now. Revisit.
 impl SimdValue for d64 {
     const LANES: usize = 1;
@@ -249,6 +261,33 @@ impl SimdValue for d64 {
     #[inline(always)]
     fn select(self, cond: Self::SimdBool, other: Self) -> Self {
         return if cond { self } else { other };
+    }
+}
+
+impl Signed for d64 {
+    #[inline(always)]
+    fn abs(&self) -> Self {
+        return funcs::abs(*self);
+    }
+
+    #[inline]
+    fn abs_sub(&self, other: &Self) -> Self {
+        return funcs::abs(arith::sub_qq(*self, *other));
+    }
+
+    #[inline(always)]
+    fn signum(&self) -> Self {
+        return d64::from(self.hi.signum());
+    }
+
+    #[inline(always)]
+    fn is_positive(&self) -> bool {
+        return self.hi.is_sign_positive();
+    }
+
+    #[inline(always)]
+    fn is_negative(&self) -> bool {
+        return self.hi.is_sign_negative();
     }
 }
 
