@@ -7,6 +7,7 @@ use super::{d64, AddFast, SubFast, CompensatedArithmetic};
 use super::{arith, round};
 use std::ops::*;
 use num_traits::*;
+use simba::simd::SimdValue;
 
 // ---------------------------------------------------------------------------
 // STANDARD TRAITS
@@ -205,6 +206,49 @@ impl Inv for d64 {
     type Output = d64;
     fn inv(self) -> d64 {
         return arith::reciprocal_q(self);
+    }
+}
+
+// XXX we use impl_primitive_simd_value_for_scalar! for now. Revisit.
+impl SimdValue for d64 {
+    const LANES: usize = 1;
+    type Element = d64;
+    type SimdBool = bool;
+
+    #[inline(always)]
+    fn splat(val: Self::Element) -> Self {
+        val
+    }
+
+    #[inline]
+    fn extract(&self, i: usize) -> Self::Element {
+        assert!(i < Self::LANES);
+        unsafe {
+            return self.extract_unchecked(i);
+        }
+    }
+
+    #[inline]
+    fn replace(&mut self, i: usize, val: Self::Element) {
+        assert!(i < Self::LANES);
+        unsafe {
+            self.replace_unchecked(i, val);
+        }
+    }
+
+    #[inline(always)]
+    unsafe fn extract_unchecked(&self, _: usize) -> Self::Element {
+        return *self;
+    }
+
+    #[inline(always)]
+    unsafe fn replace_unchecked(&mut self, _: usize, val: Self::Element) {
+        *self = val;
+    }
+
+    #[inline(always)]
+    fn select(self, cond: Self::SimdBool, other: Self) -> Self {
+        return if cond { self } else { other };
     }
 }
 
