@@ -22,24 +22,22 @@ use num_traits::*;
 ///
 macro_rules! binary_op
 {
-    ($Trait:ident, $func:ident, $op_qq:expr, $op_qd:expr, $op_dq:expr) => {
-        // Implementation for d64 (op) d64 -> d64
+    ($Trait:ident, $func:ident, $op_qq:path, $op_qd:path, $op_dq:path) => {
+        // implementation for d64 (op) d64
         impl $Trait for d64 {
             type Output = d64;
             fn $func(self, b: d64) -> d64 {
                 return $op_qq(self, b);
             }
         }
-
-        // Implementation for d64 (op) f64 -> d64
+        // implementation for d64 (op) f64
         impl $Trait<f64> for d64 {
             type Output = d64;
             fn $func(self, b: f64) -> d64 {
                 return $op_qd(self, b);
             }
         }
-
-        // Implementation for f64 (op) d64 -> d64
+        // implementation for f64 (op) d64
         impl $Trait<d64> for f64 {
             type Output = d64;
             fn $func(self, b: d64) -> d64 {
@@ -54,8 +52,6 @@ binary_op!(Sub, sub, arith::sub_qq, arith::sub_qd, arith::sub_dq);
 binary_op!(Mul, mul, arith::mul_qq, arith::mul_qd, arith::mul_dq);
 binary_op!(Div, div, arith::div_qq, arith::div_qd, arith::div_dq);
 binary_op!(Rem, rem, round::mod_qq, round::mod_qd, round::mod_dq);
-binary_op!(AddFast, add_fast, arith::addfast_qq, arith::addfast_qd, arith::addfast_dq);
-binary_op!(SubFast, sub_fast, arith::subfast_qq, arith::subfast_qd, arith::subfast_dq);
 
 /// Macro for implementing in-place operation traits
 ///
@@ -114,9 +110,6 @@ unary_op!(Neg, neg, arith::neg_q);
 impl CompensatedArithmetic<f64> for d64 {
     type Compensate = f64;
 
-    const ZERO: d64 = d64 {hi: 0.0, lo: 0.0};
-    const ONE: d64 = d64 {hi: 0.0, lo: 0.0};
-
     #[inline(always)]
     fn compensated_sum(a: f64, b: f64) -> d64 {
         return arith::add_dd(a, b);
@@ -157,6 +150,35 @@ impl CompensatedArithmetic<f64> for d64 {
         return self.lo;
     }
 }
+
+macro_rules! binary_op_fast
+{
+    ($Trait:ident, $func:ident, $op_qq:path, $op_qd:path, $op_dq:path) => {
+        // implementation for d64 (op) d64
+        impl $Trait for d64 {
+            unsafe fn $func(self, b: d64) -> d64 {
+                return $op_qq(self, b);
+            }
+        }
+        // implementation for d64 (op) f64
+        impl $Trait<f64> for d64 {
+            unsafe fn $func(self, b: f64) -> d64 {
+                return $op_qd(self, b);
+            }
+        }
+        // implementation for f64 (op) d64
+        impl $Trait<d64> for f64 {
+            unsafe fn $func(self, b: d64) -> d64 {
+                return $op_dq(self, b);
+            }
+        }
+    };
+}
+
+binary_op_fast!(
+    AddFast, add_fast, arith::addfast_qq, arith::addfast_qd, arith::addfast_dq);
+binary_op_fast!(
+    SubFast, sub_fast, arith::subfast_qq, arith::subfast_qd, arith::subfast_dq);
 
 // ---------------------------------------------------------------------------
 // NUMERIC TRAITS

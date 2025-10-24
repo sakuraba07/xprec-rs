@@ -1,4 +1,6 @@
 use core::f64;
+use std::ops::{Add, Sub};
+
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
@@ -41,12 +43,6 @@ pub trait CompensatedArithmetic<T> : From<T> + Into<T>
 {
     /// type of the compensate.
     type Compensate;
-
-    /// Zero accumulator
-    const ZERO: Self;
-
-    /// One accumulator
-    const ONE: Self;
 
     /// Return the compensate (lo part)
     ///
@@ -108,19 +104,28 @@ pub trait CompensatedArithmetic<T> : From<T> + Into<T>
         return Self::compensated_diff(large, small);
     }
 }
-
-pub trait AddFast<T = Self> {
-    type Output;
-
-    // XXX: should maybe be unsafe?
-    fn add_fast(self, small: T) -> Self::Output;
+/// Addition under the assumption of ordered arguments.
+pub trait AddFast<T = Self> : Add<T> {
+    /// Add `small` to `self`, assuming `small.abs() <= self.abs()`.
+    ///
+    /// Add a small value `small` to `self`, assuming that `small` is
+    /// smaller in magnitude than `self`. Under some specific circumstances,
+    /// this may lead to more efficient code.
+    ///
+    /// **Safety**: you must make sure that `small` is indeed the smaller number.
+    unsafe fn add_fast(self, small: T) -> Self::Output;
 }
 
-pub trait SubFast<T = Self> {
-    type Output;
-
-    // XXX: should maybe be unsafe?
-    fn sub_fast(self, small: T) -> Self::Output;
+/// Subtraction under the assumption of ordered arguments.
+pub trait SubFast<T = Self> : Sub<T>{
+    /// Subtract `small` from `self`, assuming `small.abs() <= self.abs()`.
+    ///
+    /// Subtract a small value `small` from `self`, assuming that `small` is
+    /// smaller in magnitude than `self`. Under some specific circumstances,
+    /// this may lead to more efficient code.
+    ///
+    /// **Safety**: you must make sure that `small` is indeed the smaller number.
+    unsafe fn sub_fast(self, small: T) -> Self::Output;
 }
 
 #[cfg(test)]
