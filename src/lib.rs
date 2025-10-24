@@ -3,9 +3,9 @@ use std::ops::{Add, Sub};
 
 /// Type for compensated arithmetic.
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
-pub struct Compensated<T> {
-    hi: T,
-    lo: T
+pub struct Compensated<H, L> {
+    hi: H,
+    lo: L
 }
 
 /// Compensated f64 (emulated quad precision) type.
@@ -44,8 +44,7 @@ pub struct Compensated<T> {
 ///      In the case of double-double division, the bound is 10u² but largest
 ///      observed error is 6u². In double by double division, we expect u². We
 ///      report the largest observed error.
-#[allow(non_camel_case_types)]
-pub type Df64 = Compensated<f64>;
+pub type Df64 = Compensated<f64, f64>;
 
 /// Arithmetic with compensated errors.
 ///
