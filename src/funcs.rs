@@ -1,27 +1,27 @@
 use libm;
-use crate::d64;
+use crate::Df64;
 use crate::{arith, checks};
 
 #[inline]
-pub fn ldexp(a: d64, n: i32) -> d64
+pub fn ldexp(a: Df64, n: i32) -> Df64
 {
-    return d64 {hi: libm::ldexp(a.hi, n), lo: libm::ldexp(a.lo, n)};
+    return Df64 {hi: libm::ldexp(a.hi, n), lo: libm::ldexp(a.lo, n)};
 }
 
 #[inline]
-pub fn scalbn(a: d64, n: i32) -> d64
+pub fn scalbn(a: Df64, n: i32) -> Df64
 {
-    return d64 {hi: libm::scalbn(a.hi, n), lo: libm::scalbn(a.lo, n)};
+    return Df64 {hi: libm::scalbn(a.hi, n), lo: libm::scalbn(a.lo, n)};
 }
 
 #[inline]
-pub fn ilogb(x: d64) -> i32
+pub fn ilogb(x: Df64) -> i32
 {
     return libm::ilogb(x.hi);
 }
 
 #[inline]
-pub fn copysign(mag: d64, sgn: d64) -> d64
+pub fn copysign(mag: Df64, sgn: Df64) -> Df64
 {
     // The sign is determined by the hi part, however, the sign of hi and lo
     // need not be the same, so we cannot merely broadcast copysign to both
@@ -34,7 +34,7 @@ pub fn copysign(mag: d64, sgn: d64) -> d64
 }
 
 #[inline]
-pub fn abs(x: d64) -> d64
+pub fn abs(x: Df64) -> Df64
 {
     if x.hi.is_sign_negative() {
         arith::neg_q(x)
@@ -44,7 +44,7 @@ pub fn abs(x: d64) -> d64
 }
 
 #[inline]
-pub fn min(a: d64, b: d64) -> d64
+pub fn min(a: Df64, b: Df64) -> Df64
 {
     // fmin considers NaN to be the largest number. (a <= b) is false with
     // either element being NaN, if a is NaN, then it is okay to return b;
@@ -57,7 +57,7 @@ pub fn min(a: d64, b: d64) -> d64
 }
 
 #[inline]
-pub fn max(a: d64, b: d64) -> d64
+pub fn max(a: Df64, b: Df64) -> Df64
 {
     if a <= b || checks::is_nan(a) {
         b

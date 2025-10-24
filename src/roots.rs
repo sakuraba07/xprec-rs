@@ -1,7 +1,7 @@
-use super::d64;
+use super::Df64;
 use super::arith::*;
 
-pub fn hypot(x: d64, y: d64) -> d64
+pub fn hypot(x: Df64, y: Df64) -> Df64
 {
     // XXX unfortunately, rust has no const floats expressions, so we need
     //     to hard-code this here
@@ -14,7 +14,7 @@ pub fn hypot(x: d64, y: d64) -> d64
     if x_magn >= y_magn {
         if x_magn >= LARGE {
             if x_magn.is_infinite() {
-                return d64::INFINITY;
+                return Df64::INFINITY;
             }
             mul_pow2(_hypot(mul_pow2(x, SMALL), mul_pow2(y, SMALL)), LARGE)
         } else if x_magn < SMALL {
@@ -25,7 +25,7 @@ pub fn hypot(x: d64, y: d64) -> d64
     } else {
         if y_magn >= LARGE {
             if y_magn.is_infinite() {
-                return d64::INFINITY;
+                return Df64::INFINITY;
             }
             mul_pow2(_hypot(mul_pow2(y, SMALL), mul_pow2(x, SMALL)), LARGE)
         } else if y_magn < SMALL {
@@ -37,14 +37,14 @@ pub fn hypot(x: d64, y: d64) -> d64
 }
 
 #[inline]
-fn _hypot(x: d64, y: d64) -> d64
+fn _hypot(x: Df64, y: Df64) -> Df64
 {
     let x2 = square_q(x);
     let y2 = square_q(y);
     return sqrt_q(addfast_qq(x2, y2));
 }
 
-pub fn inv_sqrt(x: d64) -> d64
+pub fn inv_sqrt(x: Df64) -> Df64
 {
     // Use strategy similar to Karp to compute 1/sqrt(x)
     // cost 12 flops (3 of which divisions), observed error 2 u^2
@@ -52,7 +52,7 @@ pub fn inv_sqrt(x: d64) -> d64
     // First, give an approximation to sqrt(x)
     let sqrt_x0 = x.hi.sqrt();
     if x.hi <= 0.0 || !x.hi.is_finite() {
-        return d64::from(1.0 / sqrt_x0);
+        return Df64::from(1.0 / sqrt_x0);
     }
 
     // The correction term is then given by the lo part and the difference
@@ -81,27 +81,27 @@ mod test {
     #[test]
     fn test_hypot()
     {
-        assert!(is_infinite(hypot(d64::INFINITY, d64::EPSILON)));
-        assert!(is_infinite(hypot(d64::EPSILON, -d64::INFINITY)));
-        assert!(is_infinite(hypot(d64::INFINITY, d64::INFINITY)));
+        assert!(is_infinite(hypot(Df64::INFINITY, Df64::EPSILON)));
+        assert!(is_infinite(hypot(Df64::EPSILON, -Df64::INFINITY)));
+        assert!(is_infinite(hypot(Df64::INFINITY, Df64::INFINITY)));
 
         check_binary(hypot, |x,y| x.hypot(&y),
-                     d64::from(1.0), d64::from(1.0), 1.5);
+                     Df64::from(1.0), Df64::from(1.0), 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
-                     d64::from(3.0), d64::from(-10000.0), 1.5);
+                     Df64::from(3.0), Df64::from(-10000.0), 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
-                     d64::from(1e249), d64::from(1e241), 1.5);
+                     Df64::from(1e249), Df64::from(1e241), 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
-                     d64::from(1e241), d64::from(-1e249), 1.5);
+                     Df64::from(1e241), Df64::from(-1e249), 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
-                     d64::from(1e-251), d64::from(1e-259), 1.5);
+                     Df64::from(1e-251), Df64::from(1e-259), 1.5);
         check_binary(hypot, |x,y| x.hypot(&y),
-                     d64::from(-1e-259), d64::from(1e-248), 1.5);
+                     Df64::from(-1e-259), Df64::from(1e-248), 1.5);
 
-        let mut x = d64::from(10.0);
-        while x > d64::from(5.0) {
+        let mut x = Df64::from(10.0);
+        while x > Df64::from(5.0) {
             let mut y = x;
-            while y > d64::from(1e-35) {
+            while y > Df64::from(1e-35) {
                 // fast addition
                 check_binary(hypot, |x, y| x.hypot(&y), x, y, 1.5);
                 y = mul_qd(y, 0.9383);
@@ -113,14 +113,14 @@ mod test {
     #[test]
     fn test_roots_q()
     {
-        let mut x = d64::from(1.0);
-        while x > d64::from(1e-290) {
+        let mut x = Df64::from(1.0);
+        while x > Df64::from(1e-290) {
             check_unary(inv_sqrt, |x| 1.0 / x.sqrt(), x, 2.0);
             x = mul_qd(x, 0.992);
         }
 
-        x = d64::from(1.0);
-        while x < d64::from(1e290) {
+        x = Df64::from(1.0);
+        while x < Df64::from(1e290) {
             check_unary(inv_sqrt, |x| 1.0 / x.sqrt(), x, 2.0);
             x = div_qd(x, 0.992);
         }

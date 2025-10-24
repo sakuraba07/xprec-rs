@@ -11,7 +11,7 @@ The rough cost in floating point operations (fl) and relative error as
 multiples of u² = 1.32e-32 (round-off error or half the machine epsilon) is
 as follows:
 
-  | (op)       | f64 f64 | error | d64 f64 | error | d64 d64 | error |
+  | (op)       | f64 f64 | error | Df64 f64 | error | Df64 Df64 | error |
   |------------|--------:|------:|--------:|------:|--------:|------:|
   | add_fast   |    3 fl |   0u² |    7 fl |   2u² |   17 fl |   3u² |
   | + -        |    6 fl |   0u² |   10 fl |   2u² |   20 fl |   3u² |

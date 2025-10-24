@@ -17,31 +17,31 @@ use simba::scalar::*;
 /// Implements traits `Trait` for a binary operation `func` for the following
 /// combination of types
 ///
-///   - `$op_qq: fn(d64, d64) -> d64` ... `$Trait for d64`
-///   - `$op_qd: fn(d64, f64) -> d64` ... `$Trait<f64> for d64`
-///   - `$op_dq: fn(f64, d64) -> d64` ... `$Trait<d64> for f64`
+///   - `$op_qq: fn(Df64, Df64) -> Df64` ... `$Trait for Df64`
+///   - `$op_qd: fn(Df64, f64) -> Df64` ... `$Trait<f64> for Df64`
+///   - `$op_dq: fn(f64, Df64) -> Df64` ... `$Trait<Df64> for f64`
 ///
 macro_rules! binary_op
 {
     ($Trait:ident, $func:ident, $op_qq:path, $op_qd:path, $op_dq:path) => {
-        // implementation for d64 (op) d64
-        impl $Trait for d64 {
-            type Output = d64;
-            fn $func(self, b: d64) -> d64 {
+        // implementation for Df64 (op) Df64
+        impl $Trait for Df64 {
+            type Output = Df64;
+            fn $func(self, b: Df64) -> Df64 {
                 return $op_qq(self, b);
             }
         }
-        // implementation for d64 (op) f64
-        impl $Trait<f64> for d64 {
-            type Output = d64;
-            fn $func(self, b: f64) -> d64 {
+        // implementation for Df64 (op) f64
+        impl $Trait<f64> for Df64 {
+            type Output = Df64;
+            fn $func(self, b: f64) -> Df64 {
                 return $op_qd(self, b);
             }
         }
-        // implementation for f64 (op) d64
-        impl $Trait<d64> for f64 {
-            type Output = d64;
-            fn $func(self, b: d64) -> d64 {
+        // implementation for f64 (op) Df64
+        impl $Trait<Df64> for f64 {
+            type Output = Df64;
+            fn $func(self, b: Df64) -> Df64 {
                 return $op_dq(self, b);
             }
         }
@@ -59,18 +59,18 @@ binary_op!(Rem, rem, round::mod_qq, round::mod_qd, round::mod_dq);
 /// Implements traits `Trait` for a inplace operation `func` for the following
 /// combination of types
 ///
-///   - `$op_qq: fn(d64, d64) -> d64` ... `$Trait for d64`
-///   - `$op_qd: fn(d64, f64) -> d64` ... `$Trait<f64> for d64`
+///   - `$op_qq: fn(Df64, Df64) -> Df64` ... `$Trait for Df64`
+///   - `$op_qd: fn(Df64, f64) -> Df64` ... `$Trait<f64> for Df64`
 ///
 macro_rules! inplace_op
 {
     ($Trait:ident, $func:ident, $op_qq:expr, $op_qd:expr) => {
-        impl $Trait for d64 {
-            fn $func(&mut self, other: d64) {
+        impl $Trait for Df64 {
+            fn $func(&mut self, other: Df64) {
                 *self = $op_qq(*self, other);
             }
         }
-        impl $Trait<f64> for d64 {
+        impl $Trait<f64> for Df64 {
             fn $func(&mut self, other: f64) {
                 *self = $op_qd(*self, other);
             }
@@ -89,14 +89,14 @@ inplace_op!(RemAssign, rem_assign, round::mod_qq, round::mod_qd);
 /// Implements traits `Trait` for a inplace operation `func` for the following
 /// type:
 ///
-///   - `$op_q: fn(d64) -> d64` ... `$Trait for d64`
+///   - `$op_q: fn(Df64) -> Df64` ... `$Trait for Df64`
 ///
 macro_rules! unary_op
 {
     ($Trait:ident, $func:ident, $op_q:expr) => {
-        impl $Trait for d64 {
-            type Output = d64;
-            fn $func(self) -> d64 {
+        impl $Trait for Df64 {
+            type Output = Df64;
+            fn $func(self) -> Df64 {
                 return $op_q(self);
             }
         }
@@ -108,46 +108,46 @@ unary_op!(Neg, neg, arith::neg_q);
 // ---------------------------------------------------------------------------
 // COMPENSATE
 
-impl CompensatedArithmetic<f64> for d64 {
+impl CompensatedArithmetic<f64> for Df64 {
     type Compensate = f64;
 
     #[inline(always)]
-    fn compensated_sum(a: f64, b: f64) -> d64 {
+    fn compensated_sum(a: f64, b: f64) -> Df64 {
         return arith::add_dd(a, b);
     }
 
     #[inline(always)]
-    fn compensated_diff(a: f64, b: f64) -> d64 {
+    fn compensated_diff(a: f64, b: f64) -> Df64 {
         return arith::sub_dd(a, b);
     }
 
     #[inline(always)]
-    fn compensated_prod(a: f64, b: f64) -> d64 {
+    fn compensated_prod(a: f64, b: f64) -> Df64 {
         return arith::mul_dd(a, b);
     }
 
     #[inline(always)]
-    fn compensated_ratio(a: f64, b: f64) -> d64 {
+    fn compensated_ratio(a: f64, b: f64) -> Df64 {
         return arith::div_dd(a, b);
     }
 
     #[inline(always)]
-    fn compensated_sqrt(a: f64) -> d64 {
+    fn compensated_sqrt(a: f64) -> Df64 {
         return arith::sqrt_d(a);
     }
 
     #[inline(always)]
-    unsafe fn compensated_fast_sum(a: f64, b: f64) -> d64 {
+    unsafe fn compensated_fast_sum(a: f64, b: f64) -> Df64 {
         return arith::addfast_dd(a, b);
     }
 
     #[inline(always)]
-    unsafe fn compensated_fast_diff(a: f64, b: f64) -> d64 {
+    unsafe fn compensated_fast_diff(a: f64, b: f64) -> Df64 {
         return arith::subfast_dd(a, b);
     }
 
     #[inline(always)]
-    fn compensate(self: &d64) -> f64 {
+    fn compensate(self: &Df64) -> f64 {
         return self.lo;
     }
 }
@@ -155,21 +155,21 @@ impl CompensatedArithmetic<f64> for d64 {
 macro_rules! binary_op_fast
 {
     ($Trait:ident, $func:ident, $op_qq:path, $op_qd:path, $op_dq:path) => {
-        // implementation for d64 (op) d64
-        impl $Trait for d64 {
-            unsafe fn $func(self, b: d64) -> d64 {
+        // implementation for Df64 (op) Df64
+        impl $Trait for Df64 {
+            unsafe fn $func(self, b: Df64) -> Df64 {
                 return $op_qq(self, b);
             }
         }
-        // implementation for d64 (op) f64
-        impl $Trait<f64> for d64 {
-            unsafe fn $func(self, b: f64) -> d64 {
+        // implementation for Df64 (op) f64
+        impl $Trait<f64> for Df64 {
+            unsafe fn $func(self, b: f64) -> Df64 {
                 return $op_qd(self, b);
             }
         }
-        // implementation for f64 (op) d64
-        impl $Trait<d64> for f64 {
-            unsafe fn $func(self, b: d64) -> d64 {
+        // implementation for f64 (op) Df64
+        impl $Trait<Df64> for f64 {
+            unsafe fn $func(self, b: Df64) -> Df64 {
                 return $op_dq(self, b);
             }
         }
@@ -184,32 +184,32 @@ binary_op_fast!(
 // ---------------------------------------------------------------------------
 // NUMERIC TRAITS
 
-impl Zero for d64 {
-    fn zero() -> d64 {
-        return d64 {hi: 0.0, lo: 0.0};
+impl Zero for Df64 {
+    fn zero() -> Df64 {
+        return Df64 {hi: 0.0, lo: 0.0};
     }
     fn is_zero(&self) -> bool {
         return self.hi == 0.0;
     }
 }
 
-impl One for d64 {
-    fn one() -> d64 {
-        return d64 {hi: 1.0, lo: 0.0};
+impl One for Df64 {
+    fn one() -> Df64 {
+        return Df64 {hi: 1.0, lo: 0.0};
     }
     fn is_one(&self) -> bool {
         return self.hi == 1.0 && self.lo == 0.0;
     }
 }
 
-impl Inv for d64 {
-    type Output = d64;
-    fn inv(self) -> d64 {
+impl Inv for Df64 {
+    type Output = Df64;
+    fn inv(self) -> Df64 {
         return arith::reciprocal_q(self);
     }
 }
 
-impl Num for d64 {
+impl Num for Df64 {
     type FromStrRadixErr = <f64 as Num>::FromStrRadixErr;
 
     fn from_str_radix(str: &str, radix: u32)
@@ -217,11 +217,11 @@ impl Num for d64 {
     {
         // XXX precision is insufficient
         let x64 = f64::from_str_radix(str, radix)?;
-        return Ok(d64::from(x64));
+        return Ok(Df64::from(x64));
     }
 }
 
-impl std::fmt::Display for d64 {
+impl std::fmt::Display for Df64 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
     {
         write!(f, "(hi: {}, lo: {})", self.hi, self.lo)
@@ -229,9 +229,9 @@ impl std::fmt::Display for d64 {
 }
 
 // XXX we use impl_primitive_simd_value_for_scalar! for now. Revisit.
-impl SimdValue for d64 {
+impl SimdValue for Df64 {
     const LANES: usize = 1;
-    type Element = d64;
+    type Element = Df64;
     type SimdBool = bool;
 
     #[inline(always)]
@@ -271,7 +271,7 @@ impl SimdValue for d64 {
     }
 }
 
-impl Signed for d64 {
+impl Signed for Df64 {
     #[inline(always)]
     fn abs(&self) -> Self {
         return funcs::abs(*self);
@@ -284,7 +284,7 @@ impl Signed for d64 {
 
     #[inline(always)]
     fn signum(&self) -> Self {
-        return d64::from(self.hi.signum());
+        return Df64::from(self.hi.signum());
     }
 
     #[inline(always)]
@@ -298,26 +298,26 @@ impl Signed for d64 {
     }
 }
 
-impl SubsetOf<Self> for d64 {
+impl SubsetOf<Self> for Df64 {
     #[inline(always)]
-    fn to_superset(&self) -> d64 {
+    fn to_superset(&self) -> Df64 {
         return *self;
     }
 
     #[inline(always)]
-    fn from_superset_unchecked(element: &d64) -> d64 {
+    fn from_superset_unchecked(element: &Df64) -> Df64 {
         return *element;
     }
 
     #[inline(always)]
-    fn is_in_subset(_element: &d64) -> bool {
+    fn is_in_subset(_element: &Df64) -> bool {
         return true;
     }
 }
 
 macro_rules! impl_superset (
-    ($subset:path as d64) => {
-        impl SupersetOf<$subset> for d64 {
+    ($subset:path as Df64) => {
+        impl SupersetOf<$subset> for Df64 {
             #[inline(always)]
             fn is_in_subset(&self) -> bool {
                 // Docs specify: The notion of “nested sets” is very broad and
@@ -337,66 +337,66 @@ macro_rules! impl_superset (
             #[inline(always)]
             fn from_subset(element: &$subset) -> Self {
                 // XXX remove .. as f64
-                return d64::from(*element as f64);
+                return Df64::from(*element as f64);
             }
         }
     }
 );
 
-impl_superset!(f64 as d64);
-impl_superset!(f32 as d64);
+impl_superset!(f64 as Df64);
+impl_superset!(f32 as Df64);
 
-impl Field for d64 { }
+impl Field for Df64 { }
 
-impl ComplexField for d64 {
-    type RealField = d64;
+impl ComplexField for Df64 {
+    type RealField = Df64;
 
     #[inline(always)]
-    fn from_real(re: d64) -> Self {
+    fn from_real(re: Df64) -> Self {
         return re;
     }
 
     #[inline(always)]
-    fn real(self) -> d64 {
+    fn real(self) -> Df64 {
         return self;
     }
 
     #[inline(always)]
-    fn imaginary(self) -> d64 {
-        return d64::from(0.0);
+    fn imaginary(self) -> Df64 {
+        return Df64::from(0.0);
     }
 
     #[inline(always)]
-    fn modulus(self) -> d64 {
+    fn modulus(self) -> Df64 {
         return funcs::abs(self);
     }
 
     #[inline(always)]
-    fn modulus_squared(self) -> d64 {
+    fn modulus_squared(self) -> Df64 {
         return arith::square_q(self);
     }
 
     #[inline]
-    fn argument(self) -> d64 {
+    fn argument(self) -> Df64 {
         if self.hi.is_sign_negative() {
             return consts::PI;
         } else {
-            return d64::from(0.0);
+            return Df64::from(0.0);
         }
     }
 
     #[inline(always)]
-    fn norm1(self) -> d64 {
+    fn norm1(self) -> Df64 {
         return funcs::abs(self);
     }
 
     #[inline(always)]
-    fn scale(self, factor: d64) -> Self {
+    fn scale(self, factor: Df64) -> Self {
         return self * factor;
     }
 
     #[inline(always)]
-    fn unscale(self, factor: d64) -> Self {
+    fn unscale(self, factor: Df64) -> Self {
         return self / factor;
     }
 
@@ -435,12 +435,12 @@ impl ComplexField for d64 {
     }
 
     #[inline(always)]
-    fn abs(self) -> d64 {
+    fn abs(self) -> Df64 {
         return funcs::abs(self);
     }
 
     #[inline(always)]
-    fn hypot(self,other:Self) -> d64 {
+    fn hypot(self,other:Self) -> Df64 {
         return roots::hypot(self, other);
     }
 
@@ -520,7 +520,7 @@ impl ComplexField for d64 {
     }
 
     #[inline(always)]
-    fn log(self, base:d64) -> Self {
+    fn log(self, base:Df64) -> Self {
         todo!()
     }
 
@@ -570,7 +570,7 @@ impl ComplexField for d64 {
     }
 
     #[inline(always)]
-    fn powf(self,n:d64) -> Self {
+    fn powf(self,n:Df64) -> Self {
         todo!()
     }
 
@@ -595,7 +595,7 @@ impl ComplexField for d64 {
     }
 }
 
-impl RealField for d64 {
+impl RealField for Df64 {
     fn is_sign_positive(&self) -> bool {
         return self.hi.is_sign_positive();
     }
@@ -625,11 +625,11 @@ impl RealField for d64 {
     }
 
     fn min_value() -> Option<Self> {
-        return Some(d64::MIN_POSITIVE);
+        return Some(Df64::MIN_POSITIVE);
     }
 
     fn max_value() -> Option<Self> {
-        return Some(d64::MAX);
+        return Some(Df64::MAX);
     }
 
     fn pi() -> Self {
@@ -704,9 +704,9 @@ mod test
     #[test]
     fn test_traits()
     {
-        let x = d64::from(1.0) * 2.0;
-        let y = d64::from(1.0) / 4.0;
-        assert_eq!(1.0 + x * y - 2.0, d64::from(-0.5));
+        let x = Df64::from(1.0) * 2.0;
+        let y = Df64::from(1.0) / 4.0;
+        assert_eq!(1.0 + x * y - 2.0, Df64::from(-0.5));
     }
 
 }

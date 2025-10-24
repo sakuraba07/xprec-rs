@@ -1,13 +1,13 @@
 use std::f64;
 
 use super::utils::reciprocal_factorial;
-use super::d64;
+use super::Df64;
 use super::arith::*;
 use super::consts;
 use super::checks::*;
 use super::funcs::*;
 
-pub fn sin(x: d64) -> d64
+pub fn sin(x: Df64) -> Df64
 {
     let (sector, z) = reduce_mod_pi2(x);
     match sector {
@@ -19,7 +19,7 @@ pub fn sin(x: d64) -> d64
     }
 }
 
-pub fn cos(x: d64) -> d64
+pub fn cos(x: Df64) -> Df64
 {
     let (sector, z) = reduce_mod_pi2(x);
     match sector {
@@ -31,7 +31,7 @@ pub fn cos(x: d64) -> d64
     }
 }
 
-pub fn sincos(x: d64) -> (d64, d64)
+pub fn sincos(x: Df64) -> (Df64, Df64)
 {
     let (sector, z) = reduce_mod_pi2(x);
     let (s, c) = sincos_kernel(z);
@@ -44,18 +44,18 @@ pub fn sincos(x: d64) -> (d64, d64)
     }
 }
 
-pub fn tan(x: d64) -> d64
+pub fn tan(x: Df64) -> Df64
 {
     let (s, c) = sincos(x);
     return s / c;
 }
 
-fn reduce_mod_pi2(x: d64) -> (i32, d64)
+fn reduce_mod_pi2(x: Df64) -> (i32, Df64)
 {
     const INV_PI_HALF: f64 = 2.0 / f64::consts::PI;
     const PI_HALF: f64 = 1.5707963267948966;
-    const PI_HALF_CORR: d64 =
-            d64 {hi: 6.123233995736766e-17, lo: -1.4973849048591698e-33};
+    const PI_HALF_CORR: Df64 =
+            Df64 {hi: 6.123233995736766e-17, lo: -1.4973849048591698e-33};
 
     // Approximate reduction
     let n = (INV_PI_HALF * x.hi).round();
@@ -73,7 +73,7 @@ fn reduce_mod_pi2(x: d64) -> (i32, d64)
     return (sector, z);
 }
 
-fn sin_kernel(x: d64) -> d64
+fn sin_kernel(x: Df64) -> Df64
 {
     // Taylor series of the sin around 0
     assert!(x.hi.abs() <= 0.7854);
@@ -107,7 +107,7 @@ fn sin_kernel(x: d64) -> d64
     return r;
 }
 
-fn cos_kernel(x: d64) -> d64
+fn cos_kernel(x: Df64) -> Df64
 {
     // Taylor series of the cosine around 0
     assert!(x.hi.abs() <= 0.7854);
@@ -141,23 +141,23 @@ fn cos_kernel(x: d64) -> d64
     return r;
 }
 
-fn sincos_kernel(x: d64) -> (d64, d64)
+fn sincos_kernel(x: Df64) -> (Df64, Df64)
 {
     let s = sin_kernel(x);
     let c = sqrt_q(subfast_dq(1.0, square_q(s)));
     return (s, c);
 }
 
-pub fn asin(x: d64) -> d64
+pub fn asin(x: Df64) -> Df64
 {
     // Compute a approximation to double precision
     let y0 = x.hi.asin();
     if !y0.is_finite() {
-        return d64::from(y0);
+        return Df64::from(y0);
     }
 
     // This is where Taylor fails
-    if abs(x) == d64::from(1.0) {
+    if abs(x) == Df64::from(1.0) {
         return copysign(consts::PI_HALF, x);
     }
 
@@ -167,23 +167,23 @@ pub fn asin(x: d64) -> d64
     //            = y0 + (x - sin(y0)) / cos(y0)
     //
     // XXX this has problems around 1
-    let (x0, w) = sincos(d64::from(y0));
+    let (x0, w) = sincos(Df64::from(y0));
     let y = y0 + subfast_qq(x, x0) / w;
     return y;
 }
 
-pub fn acos(x: d64) -> d64
+pub fn acos(x: Df64) -> Df64
 {
     // Compute a approximation to double precision
     let y0 = x.hi.acos();
     if !y0.is_finite() {
-        return d64::from(y0);
+        return Df64::from(y0);
     }
 
     // This is where Taylor fails
-    if x == d64::from(1.0) {
-        return d64::from(0.0);
-    } else if x == d64::from(-1.0) {
+    if x == Df64::from(1.0) {
+        return Df64::from(0.0);
+    } else if x == Df64::from(-1.0) {
         return consts::PI;
     }
 
@@ -193,12 +193,12 @@ pub fn acos(x: d64) -> d64
     //            = y0 - (x - cos(y0)) / sin(y0)
     //
     // XXX this has problems around 1
-    let (w, x0) = sincos(d64::from(y0));
+    let (w, x0) = sincos(Df64::from(y0));
     let y = y0 + subfast_qq(x0, x) / w;
     return y;
 }
 
-pub fn atan(x: d64) -> d64
+pub fn atan(x: Df64) -> Df64
 {
     // For large values, use reflection formula
     if !(x.hi.abs() <= 1.0) {
@@ -214,20 +214,20 @@ pub fn atan(x: d64) -> d64
 
     // Again use Taylor expansion
     let y0 = x.hi.atan();
-    let (s, c) = sincos(d64::from(y0));
+    let (s, c) = sincos(Df64::from(y0));
     let x0 = s / c;
     let y = addfast_dq(y0, subfast_qq(x, x0) * square_q(c));
     return y;
 }
 
-pub fn atan2(y: d64, x: d64) -> d64
+pub fn atan2(y: Df64, x: Df64) -> Df64
 {
     // Special values
     if is_nan(x) || is_nan(y) {
-        return d64::NAN;
+        return Df64::NAN;
     } else if is_zero(y) {
         if x.hi >= 0.0 {
-            return d64::from(0.0);
+            return Df64::from(0.0);
         } else {
             return consts::PI;
         }
@@ -252,7 +252,7 @@ mod test {
     fn test_kernels()
     {
         // small values, start from PI/4
-        let mut x = d64::from(f64::consts::PI / 4.0);
+        let mut x = Df64::from(f64::consts::PI / 4.0);
         while x.hi > 1e-290 {
             check_unary(sin_kernel, |x| x.sin(), x, 1.1);
             check_unary(sin_kernel, |x| x.sin(), -x, 1.1);
@@ -271,7 +271,7 @@ mod test {
     fn test_circ()
     {
         // small values, start from PI/4
-        let mut x = d64::from(f64::consts::PI / 4.0);
+        let mut x = Df64::from(f64::consts::PI / 4.0);
         while x.hi > 1e-290 {
             check_unary(sin, |x| x.sin(),  x, 1.1);
             check_unary(sin, |x| x.sin(), -x, 1.1);
@@ -283,7 +283,7 @@ mod test {
         }
 
         // larger values
-        x = d64::from(f64::consts::PI / 4.0);
+        x = Df64::from(f64::consts::PI / 4.0);
         while x.hi < 100.0 {
             let magn = x.hi.abs().max(1.0);
             check_unary(sin, |x| x.sin(),  x, 1.5 * magn);

@@ -20,7 +20,7 @@ pub struct Compensated<T> {
 /// multiples of u² = 1.32e-32 (round-off error or half the machine epsilon) is
 /// as follows:
 ///
-///   | (op)       | f64 f64 | error | d64 f64 | error | d64 d64 | error |
+///   | (op)       | f64 f64 | error | Df64 f64 | error | Df64 Df64 | error |
 ///   |------------|--------:|------:|--------:|------:|--------:|------:|
 ///   | add_fast   |    3 fl |   0u² |    7 fl |   2u² |   17 fl |   3u² |
 ///   | + -        |    6 fl |   0u² |   10 fl |   2u² |   20 fl |   3u² |
@@ -45,7 +45,7 @@ pub struct Compensated<T> {
 ///      observed error is 6u². In double by double division, we expect u². We
 ///      report the largest observed error.
 #[allow(non_camel_case_types)]
-pub type d64 = Compensated<f64>;
+pub type Df64 = Compensated<f64>;
 
 /// Arithmetic with compensated errors.
 ///
@@ -184,15 +184,15 @@ pub mod round;
 mod traits;
 
 // Convert to float
-impl From<d64> for f64 {
-    fn from(src: d64) -> f64 {
+impl From<Df64> for f64 {
+    fn from(src: Df64) -> f64 {
         src.hi
     }
 }
 
 // Convert from float
-impl From<f64> for d64 {
-    fn from(src: f64) -> d64 {
-        d64 {hi: src, lo: 0.0}
+impl From<f64> for Df64 {
+    fn from(src: f64) -> Df64 {
+        Df64 {hi: src, lo: 0.0}
     }
 }

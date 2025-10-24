@@ -1,4 +1,4 @@
-use super::d64;
+use super::Df64;
 use rug;
 use rug::Float;
 use core::cmp::Ordering;
@@ -8,10 +8,10 @@ use rug::Assign;
 
 const PREC: u32 = 120;
 
-impl AssignRound<d64> for Float {
+impl AssignRound<Df64> for Float {
     type Round = Round;
     type Ordering = Ordering;
-    fn assign_round(&mut self, src: d64, _round: Round) -> Ordering {
+    fn assign_round(&mut self, src: Df64, _round: Round) -> Ordering {
         let (hi, _hdir) = Float::with_val_round(PREC, src.hi, _round);
         let (lo, _ldir) = Float::with_val_round(PREC, src.lo, _round);
         *self = hi + lo;
@@ -27,13 +27,13 @@ impl AssignRound<d64> for Float {
 ///  * `ulps`  - relative tolerance in the result as multiples of epsilon
 ///
 pub fn check_unary<A: Copy>(
-        f: fn(A) -> d64, fref: fn(Float) -> Float,
+        f: fn(A) -> Df64, fref: fn(Float) -> Float,
         x: A, ulps: f64)
 where
     Float: Assign<f64>,
     Float: Assign<A>
 {
-    const EPSILON: f64 = d64::EPSILON.hi;
+    const EPSILON: f64 = Df64::EPSILON.hi;
 
     // Compute result to check
     let z = f(x);
@@ -69,14 +69,14 @@ where
 ///  * `ulps`  - relative tolerance in the result as multiples of epsilon
 ///
 pub fn check_binary<A: Copy, B: Copy>(
-        f: fn(A, B) -> d64, fref: fn(Float, Float) -> Float,
+        f: fn(A, B) -> Df64, fref: fn(Float, Float) -> Float,
         x: A, y: B, ulps: f64)
 where
     Float: Assign<f64>,
     Float: Assign<A>,
     Float: Assign<B>,
 {
-    const EPSILON: f64 = d64::EPSILON.hi;
+    const EPSILON: f64 = Df64::EPSILON.hi;
 
     // Compute result to check
     let z = f(x, y);

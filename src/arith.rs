@@ -7,7 +7,7 @@
  * Copyright (C) 2023-2025 Markus Wallerberger and others
  * SPDX-License-Identifier: MIT
  */
-use super::d64;
+use super::Df64;
 
 // ---------------------------------------------------------------------------
 // Helper functions
@@ -29,28 +29,28 @@ fn is_positive_normal(a: f64) -> bool
 // double (op) double -> quad
 
 #[inline]
-pub fn addfast_dd(a: f64, b: f64) -> d64
+pub fn addfast_dd(a: f64, b: f64) -> Df64
 {
     // M. Joldes, et al., ACM Trans. Math. Softw. 44, 1-27 (2018)
     // Algorithm 1: cost 3 flops
     let s = a + b;
     let z = s - a;
     let t = b - z;
-    return d64 {hi: s, lo: t};
+    return Df64 {hi: s, lo: t};
 }
 
 #[inline]
-pub fn subfast_dd(a: f64, b: f64) -> d64
+pub fn subfast_dd(a: f64, b: f64) -> Df64
 {
     // Algorithm 1 with b -> -b: cost 3 flops
     let s = a - b;
     let z = a - s;
     let t = z - b;
-    return d64 {hi: s, lo: t};
+    return Df64 {hi: s, lo: t};
 }
 
 #[inline]
-pub fn add_dd(a: f64, b: f64) -> d64
+pub fn add_dd(a: f64, b: f64) -> Df64
 {
     // Algorithm 2: cost 6 flops
     let s = a + b;
@@ -59,11 +59,11 @@ pub fn add_dd(a: f64, b: f64) -> d64
     let delta_a = a - aprime;
     let delta_b = b - bprime;
     let t = delta_a + delta_b;
-    return d64 {hi: s, lo: t};
+    return Df64 {hi: s, lo: t};
 }
 
 #[inline]
-pub fn sub_dd(a: f64, b: f64) -> d64
+pub fn sub_dd(a: f64, b: f64) -> Df64
 {
     // Algorithm 2: cost 6 flops
     let s = a - b;
@@ -72,20 +72,20 @@ pub fn sub_dd(a: f64, b: f64) -> d64
     let delta_a = a - aprime;
     let delta_b = bprime - b;
     let t = delta_a + delta_b;
-    return d64 {hi: s, lo: t};
+    return Df64 {hi: s, lo: t};
 }
 
 #[inline]
-pub fn mul_dd(a: f64, b: f64) -> d64
+pub fn mul_dd(a: f64, b: f64) -> Df64
 {
     // Algorithm 3: cost 2 flops
     let pi = a * b;
     let rho = fma(a, b, -pi);
-    return d64 {hi: pi, lo: rho};
+    return Df64 {hi: pi, lo: rho};
 }
 
 #[inline]
-pub fn div_dd(a: f64, b: f64) -> d64
+pub fn div_dd(a: f64, b: f64) -> Df64
 {
     // Cost 3 flops (2 of which divisions), observed error 1 u^2
     // Since we are rounding faithfully, the hi part is exact
@@ -94,25 +94,25 @@ pub fn div_dd(a: f64, b: f64) -> d64
     // Multiply hi part with b and compare exactly to a to see difference
     let rl = fma(-b, th, a);
     let tl = rl / b;
-    return d64 {hi: th, lo: tl};
+    return Df64 {hi: th, lo: tl};
 }
 
 #[inline(always)]
-pub fn reciprocal_d(x: f64) -> d64
+pub fn reciprocal_d(x: f64) -> Df64
 {
     return div_dd(1.0, x);
 }
 
 #[inline]
-pub fn sqrt_d(a: f64) -> d64
+pub fn sqrt_d(a: f64) -> Df64
 {
     // Karp, Table II, cost 4 flops, error 1 u^2
     let y0 = a.sqrt();
     if is_positive_normal(a) {
         let delta_y = fma(-y0, y0, a) / y0;
-        return d64 {hi: y0, lo: 0.5 * delta_y};
+        return Df64 {hi: y0, lo: 0.5 * delta_y};
     } else {
-        return d64::from(y0);
+        return Df64::from(y0);
     }
 }
 
@@ -120,7 +120,7 @@ pub fn sqrt_d(a: f64) -> d64
 // quad (op) double -> quad
 
 #[inline]
-pub fn addfast_qd(x: d64, y: f64) -> d64
+pub fn addfast_qd(x: Df64, y: f64) -> Df64
 {
     // Algorithm 4 modified: cost 7 flops, error 2 u^2
     let s = addfast_dd(x.hi, y);
@@ -129,7 +129,7 @@ pub fn addfast_qd(x: d64, y: f64) -> d64
 }
 
 #[inline]
-pub fn subfast_qd(x: d64, y: f64) -> d64
+pub fn subfast_qd(x: Df64, y: f64) -> Df64
 {
     // Algorithm 4 modified: cost 7 flops, error 2 u^2
     let s = subfast_dd(x.hi, y);
@@ -138,7 +138,7 @@ pub fn subfast_qd(x: d64, y: f64) -> d64
 }
 
 #[inline]
-pub fn add_qd(x: d64, y: f64) -> d64
+pub fn add_qd(x: Df64, y: f64) -> Df64
 {
     // Algorithm 4: cost 10 flops, error 2 u^2
     let s = add_dd(x.hi, y);
@@ -147,7 +147,7 @@ pub fn add_qd(x: d64, y: f64) -> d64
 }
 
 #[inline]
-pub fn sub_qd(x: d64, y: f64) -> d64
+pub fn sub_qd(x: Df64, y: f64) -> Df64
 {
     // Algorithm 4: cost 10 flops, error 2 u^2
     let s = sub_dd(x.hi, y);
@@ -156,7 +156,7 @@ pub fn sub_qd(x: d64, y: f64) -> d64
 }
 
 #[inline]
-pub fn mul_qd(x: d64, y: f64) -> d64
+pub fn mul_qd(x: Df64, y: f64) -> Df64
 {
     // Algorithm 9: cost 6 flops, error 2 u^2
     let c = mul_dd(x.hi, y);
@@ -165,7 +165,7 @@ pub fn mul_qd(x: d64, y: f64) -> d64
 }
 
 #[inline]
-pub fn div_qd(x: d64, y: f64) -> d64
+pub fn div_qd(x: Df64, y: f64) -> Df64
 {
     // We could have used algorithm 15 here: cost 10 flops, error 3 u^2.
     // It turns out however by using fma, we can reduce this to 7 flops:
@@ -189,20 +189,20 @@ pub fn div_qd(x: d64, y: f64) -> d64
 // quad (op) power of two -> quad
 
 #[inline(always)]
-pub fn add_pow2(a: d64, p: f64) -> d64
+pub fn add_pow2(a: Df64, p: f64) -> Df64
 {
     // This can be added quickly because the mantissa part is zero.
     return addfast_qd(a, p);
 }
 
 #[inline(always)]
-pub fn mul_pow2(a: d64, p: f64) -> d64
+pub fn mul_pow2(a: Df64, p: f64) -> Df64
 {
-    return d64 {hi: a.hi * p, lo: a.lo * p};
+    return Df64 {hi: a.hi * p, lo: a.lo * p};
 }
 
 #[inline(always)]
-pub fn div_pow2(a: d64, p: f64) -> d64
+pub fn div_pow2(a: Df64, p: f64) -> Df64
 {
     return mul_pow2(a, 1.0 / p);
 }
@@ -211,7 +211,7 @@ pub fn div_pow2(a: d64, p: f64) -> d64
 // double (op) quad -> quad
 
 #[inline]
-pub fn addfast_dq(x: f64, y: d64) -> d64
+pub fn addfast_dq(x: f64, y: Df64) -> Df64
 {
     // Algorithm 4 modified: cost 7 flops, error 2 u^2
     let s = addfast_dd(x, y.hi);
@@ -220,7 +220,7 @@ pub fn addfast_dq(x: f64, y: d64) -> d64
 }
 
 #[inline]
-pub fn subfast_dq(x: f64, y: d64) -> d64
+pub fn subfast_dq(x: f64, y: Df64) -> Df64
 {
     // Algorithm 4 modified: cost 7 flops, error 2 u^2
     let s = subfast_dd(x, y.hi);
@@ -229,25 +229,25 @@ pub fn subfast_dq(x: f64, y: d64) -> d64
 }
 
 #[inline(always)]
-pub fn add_dq(x: f64, y: d64) -> d64
+pub fn add_dq(x: f64, y: Df64) -> Df64
 {
     return add_qd(y, x);
 }
 
 #[inline(always)]
-pub fn sub_dq(x: f64, y: d64) -> d64
+pub fn sub_dq(x: f64, y: Df64) -> Df64
 {
     return add_qd(neg_q(y), x);
 }
 
 #[inline(always)]
-pub fn mul_dq(x: f64, y: d64) -> d64
+pub fn mul_dq(x: f64, y: Df64) -> Df64
 {
     return mul_qd(y, x);
 }
 
 #[inline(always)]
-pub fn div_dq(x: f64, y: d64) -> d64
+pub fn div_dq(x: f64, y: Df64) -> Df64
 {
     return mul_qd(reciprocal_q(y), x);
 }
@@ -256,7 +256,7 @@ pub fn div_dq(x: f64, y: d64) -> d64
 // quad (op) quad -> quad
 
 #[inline]
-pub fn addfast_qq(x: d64, y: d64) -> d64
+pub fn addfast_qq(x: Df64, y: Df64) -> Df64
 {
     // Algorithm 6: cost 17 flops, error 3 u^2 + 13 u^3
     let s = addfast_dd(x.hi, y.hi);
@@ -268,7 +268,7 @@ pub fn addfast_qq(x: d64, y: d64) -> d64
 }
 
 #[inline]
-pub fn subfast_qq(x: d64, y: d64) -> d64
+pub fn subfast_qq(x: Df64, y: Df64) -> Df64
 {
     // Algorithm 6: cost 17 flops, error 3 u^2 + 13 u^3
     let s = subfast_dd(x.hi, y.hi);
@@ -280,7 +280,7 @@ pub fn subfast_qq(x: d64, y: d64) -> d64
 }
 
 #[inline]
-pub fn add_qq(x: d64, y: d64) -> d64
+pub fn add_qq(x: Df64, y: Df64) -> Df64
 {
     // Algorithm 6: cost 20 flops, error 3 u^2 + 13 u^3
     let s = add_dd(x.hi, y.hi);
@@ -292,7 +292,7 @@ pub fn add_qq(x: d64, y: d64) -> d64
 }
 
 #[inline]
-pub fn sub_qq(x: d64, y: d64) -> d64
+pub fn sub_qq(x: Df64, y: Df64) -> Df64
 {
     // Algorithm 6: cost 20 flops, error 3 u^2 + 13 u^3
     let s = sub_dd(x.hi, y.hi);
@@ -304,7 +304,7 @@ pub fn sub_qq(x: d64, y: d64) -> d64
 }
 
 #[inline]
-pub fn mul_qq(x: d64, y: d64) -> d64
+pub fn mul_qq(x: Df64, y: Df64) -> Df64
 {
     // Algorithm 12: cost 9 flops, error 4 u^2 (corrected)
     let c = mul_dd(x.hi, y.hi);
@@ -315,19 +315,19 @@ pub fn mul_qq(x: d64, y: d64) -> d64
     return addfast_dd(c.hi, cl3);
 }
 
-pub fn div_qq(x: d64, y: d64) -> d64
+pub fn div_qq(x: Df64, y: Df64) -> Df64
 {
     return mul_qq(reciprocal_q(y), x);
 }
 
 #[inline(always)]
-pub fn neg_q(x: d64) -> d64
+pub fn neg_q(x: Df64) -> Df64
 {
-    return d64 {hi: -x.hi, lo: -x.lo};
+    return Df64 {hi: -x.hi, lo: -x.lo};
 }
 
 #[inline]
-pub fn reciprocal_q(y: d64) -> d64
+pub fn reciprocal_q(y: Df64) -> Df64
 {
     // Part of Algorithm 18: cost 19 flops, error 2.3 u^2
     let th = 1.0 / y.hi;
@@ -345,7 +345,7 @@ pub fn reciprocal_q(y: d64) -> d64
 }
 
 #[inline]
-pub fn sqrt_q(a: d64) -> d64
+pub fn sqrt_q(a: Df64) -> Df64
 {
     // Karp, Table II, cost 8 flops, error 2 u^2
     // The double result provides a approximation to sqrt(a). It performs
@@ -353,7 +353,7 @@ pub fn sqrt_q(a: d64) -> d64
     // cases.
     let y0 = a.hi.sqrt();
     if !is_positive_normal(a.hi) {
-        return d64::from(y0);
+        return Df64::from(y0);
     }
 
     // This is based on Newton-Ralphson for f(x) = a - 1/x^2:
@@ -368,7 +368,7 @@ pub fn sqrt_q(a: d64) -> d64
 }
 
 #[inline]
-pub fn square_q(x: d64) -> d64
+pub fn square_q(x: Df64) -> Df64
 {
     // Simple squaring algorithm
     // Cost 7 flops
@@ -434,10 +434,10 @@ mod test
     #[test]
     fn test_arith_qd()
     {
-        let mut x = d64::from(10.0);
-        while x > d64::from(5.0) {
+        let mut x = Df64::from(10.0);
+        while x > Df64::from(5.0) {
             let mut y = x;
-            while y > d64::from(1e-35) {
+            while y > Df64::from(1e-35) {
                 // fast addition
                 check_binary(addfast_qd, |x, y| x + y, x, y.hi, 1.6);
                 check_binary(addfast_qd, |x, y| x + y, x, -y.hi, 1.6);
@@ -503,10 +503,10 @@ mod test
     #[test]
     fn test_arith_qq()
     {
-        let mut x = d64::from(10.0);
-        while x > d64::from(5.0) {
+        let mut x = Df64::from(10.0);
+        while x > Df64::from(5.0) {
             let mut y = x;
-            while y > d64::from(1e-35) {
+            while y > Df64::from(1e-35) {
                 // fast addition
                 check_binary(addfast_qq, |x, y| x + y, x, y, 1.6);
                 check_binary(addfast_qq, |x, y| x + y, x, neg_q(y), 1.6);
@@ -568,19 +568,19 @@ mod test
     #[test]
     fn test_arith_q()
     {
-        let mut x = d64::from(1.0);
-        while x > d64::from(1e-290) {
+        let mut x = Df64::from(1.0);
+        while x > Df64::from(1e-290) {
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
             check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
             check_unary(reciprocal_q, |x| 1.0 / x, x, 1.5);
             x = mul_qd(x, 0.992);
         }
 
-        x = d64::from(1.0);
-        while x < d64::from(1e300) {
+        x = Df64::from(1.0);
+        while x < Df64::from(1e300) {
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
             check_unary(sqrt_q, |x| x.sqrt(), x, 2.0);
-            if x < d64::from(1e290) {
+            if x < Df64::from(1e290) {
                 check_unary(reciprocal_q, |x| 1.0 / x, x, 1.5);
             }
             x = div_qd(x, 0.992);
