@@ -86,11 +86,10 @@ impl approx::AbsDiffEq for Df64 {
 
     #[inline(always)]
     fn default_epsilon() -> Self::Epsilon {
-        // Use a reasonable multiple of the machine epsilon for Df64.
-        // Df64::EPSILON ≈ 2.47e-32 represents the effective precision.
-        // Using MIN_POSITIVE (≈ 1e-292) causes excessive iterations in
-        // iterative algorithms like SVD, leading to numerical error accumulation.
-        return Df64::EPSILON;
+        // A useful default absolute tolerance is one at the floor of the
+        // double range, since otherwise it is not clear what the scale is.
+        // We also ignore denormal numbers.
+        return Df64::MIN_POSITIVE;
     }
 
     #[inline(always)]
