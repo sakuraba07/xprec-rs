@@ -21,6 +21,18 @@ pub struct Compensated<H, L>
     lo: L
 }
 
+impl<H, L> Compensated<H, L> {
+    /// Get the high part of the compensated value
+    pub fn hi(self) -> H {
+        self.hi
+    }
+    
+    /// Get the low part of the compensated value
+    pub fn lo(self) -> L {
+        self.lo
+    }
+}
+
 /// Compensated f64 (emulated quad precision) type.
 ///
 /// Emulates quadruple precision with a pair of doubles.  This roughly doubles
@@ -203,14 +215,14 @@ pub trait SubFast<T = Self> : Sub<T>{
 pub mod arith;
 pub mod checks;
 pub mod gauss;
+pub mod funcs;
+pub mod circular;
+pub mod exp;
+pub mod hyperbolic;
+pub mod consts;
 
 // Private modules
-mod circular;
-mod consts;
 mod convert;
-mod exp;
-mod funcs;
-mod hyperbolic;
 mod roots;
 mod round;
 mod traits;
