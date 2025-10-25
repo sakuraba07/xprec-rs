@@ -123,4 +123,53 @@ impl num_traits::FromPrimitive for Df64 {
     #[inline] fn from_u16(n: u16)     -> Option<Df64> { return Some(from_u16(n)); }
     #[inline] fn from_u32(n: u32)     -> Option<Df64> { return Some(from_u32(n)); }
     #[inline] fn from_u64(n: u64)     -> Option<Df64> { return Some(from_u64(n)); }
+
+    #[inline] fn from_f32(n: f32)     -> Option<Df64> { return Some(Df64::from(n as f64)); }
+    #[inline] fn from_f64(n: f64)     -> Option<Df64> { return Some(Df64::from(n)); }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use num_traits::FromPrimitive;
+
+    #[test]
+    fn test_from_primitive_f64() {
+        // Test basic f64 conversion
+        let val = 1.5;
+        let df64 = Df64::from_f64(val).unwrap();
+        assert_eq!(df64.hi, 1.5);
+        assert_eq!(df64.lo, 0.0);
+    }
+
+    #[test]
+    fn test_from_primitive_f32() {
+        // Test f32 conversion
+        let val = 2.25f32;
+        let df64 = Df64::from_f32(val).unwrap();
+        assert_eq!(df64.hi, 2.25);
+        assert_eq!(df64.lo, 0.0);
+    }
+
+    #[test]
+    fn test_from_primitive_integers() {
+        // Test integer conversions
+        assert_eq!(Df64::from_i32(42).unwrap(), Df64 { hi: 42.0, lo: 0.0 });
+        assert_eq!(Df64::from_u64(100).unwrap(), Df64 { hi: 100.0, lo: 0.0 });
+        assert_eq!(Df64::from_isize(-5).unwrap(), Df64 { hi: -5.0, lo: 0.0 });
+    }
+
+    #[test]
+    fn test_from_primitive_edge_cases() {
+        // Test edge cases
+        assert_eq!(Df64::from_f64(0.0).unwrap(), Df64::ZERO);
+        assert_eq!(Df64::from_f64(1.0).unwrap(), Df64::ONE);
+        assert_eq!(Df64::from_f64(-1.0).unwrap(), Df64 { hi: -1.0, lo: 0.0 });
+        
+        // Test very small numbers
+        let small = 1e-10;
+        let df64 = Df64::from_f64(small).unwrap();
+        assert_eq!(df64.hi, small);
+        assert_eq!(df64.lo, 0.0);
+    }
 }
