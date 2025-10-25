@@ -215,14 +215,14 @@ pub trait SubFast<T = Self> : Sub<T>{
 pub mod arith;
 pub mod checks;
 pub mod gauss;
-pub mod funcs;
-pub mod circular;
-pub mod exp;
-pub mod hyperbolic;
-pub mod consts;
 
 // Private modules
+mod circular;
+mod consts;
 mod convert;
+mod exp;
+mod funcs;
+mod hyperbolic;
 mod roots;
 mod round;
 mod traits;
