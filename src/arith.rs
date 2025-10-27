@@ -379,6 +379,7 @@ pub fn square_q(x: Df64) -> Df64
 mod test
 {
     use super::*;
+    use crate::*;
     use super::super::test_utils::*;
 
     #[test]
@@ -543,6 +544,9 @@ mod test
     #[test]
     fn test_arith_d()
     {
+        check_unary(sqrt_d, |x| x.sqrt(), 0.0, 1.0);
+        assert!(checks::is_nan(sqrt_d(-f64::MIN_POSITIVE)));
+
         let mut x = 1.0;
         while x > 1e-290 {
             check_unary(sqrt_d, |x| x.sqrt(), x, 2.0);
@@ -563,6 +567,9 @@ mod test
     #[test]
     fn test_arith_q()
     {
+        check_unary(sqrt_q, |x| x.sqrt(), Df64::ZERO, 1.0);
+        assert!(checks::is_nan(sqrt_q(-Df64::MIN_POSITIVE)));
+
         let mut x = Df64::ONE;
         while x > Df64::from(1e-290) {
             check_unary(square_q, |x| x.clone() * x, sqrt_q(x), 2.0);
