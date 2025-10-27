@@ -12,17 +12,12 @@ use super::Df64;
 // ---------------------------------------------------------------------------
 // Helper functions
 
-#[inline(always)]
-fn fma(a: f64, b: f64, c: f64) -> f64
+// smallest positive number
+const fn tiny() -> f64
 {
-    return a.mul_add(b, c);
-}
-
-#[inline]
-fn is_positive_normal(a: f64) -> bool
-{
-    // XXX this can be done by some clever bit hackery.
-    return a > f64::MIN_POSITIVE && a.is_finite()
+    const TINY: f64 = 4.9406564584124654e-324;
+    debug_assert!(TINY != 0.0);
+    return TINY;
 }
 
 // ---------------------------------------------------------------------------
@@ -80,7 +75,7 @@ pub fn mul_dd(a: f64, b: f64) -> Df64
 {
     // Algorithm 3: cost 2 flops
     let pi = a * b;
-    let rho = fma(a, b, -pi);
+    let rho = a.mul_add(b, -pi);
     return Df64 {hi: pi, lo: rho};
 }
 
@@ -92,7 +87,7 @@ pub fn div_dd(a: f64, b: f64) -> Df64
     let th = a / b;
 
     // Multiply hi part with b and compare exactly to a to see difference
-    let rl = fma(-b, th, a);
+    let rl = (-b).mul_add(th, a);
     let tl = rl / b;
     return Df64 {hi: th, lo: tl};
 }
@@ -106,14 +101,15 @@ pub fn reciprocal_d(x: f64) -> Df64
 #[inline]
 pub fn sqrt_d(a: f64) -> Df64
 {
-    // Karp, Table II, cost 4 flops, error 1 u^2
+    // Karp, Table II, cost 5 flops, error 1 u^2
     let y0 = a.sqrt();
-    if is_positive_normal(a) {
-        let delta_y = fma(-y0, y0, a) / y0;
-        return Df64 {hi: y0, lo: 0.5 * delta_y};
-    } else {
-        return Df64::from(y0);
-    }
+
+    // Adding a small number regularizes the case a == 0, where we would
+    // otherwise divide zero by zero.
+    let enumer = (-y0).mul_add(y0, a);
+    let denom = tiny() + y0 + y0;
+    let delta_y = enumer / denom;
+    return Df64 {hi: y0, lo: delta_y};
 }
 
 // ---------------------------------------------------------------------------
@@ -160,7 +156,7 @@ pub fn mul_qd(x: Df64, y: f64) -> Df64
 {
     // Algorithm 9: cost 6 flops, error 2 u^2
     let c = mul_dd(x.hi, y);
-    let cl3 = fma(x.lo, y, c.lo);
+    let cl3 = x.lo.mul_add(y, c.lo);
     return addfast_dd(c.hi, cl3);
 }
 
@@ -180,7 +176,7 @@ pub fn div_qd(x: Df64, y: f64) -> Df64
     // the together with the third term they are scaled by u, so are safe to
     // compute in precision: f64.
     let th = x.hi / y;
-    let rl = fma(-y, th, x.hi) + x.lo;
+    let rl = (-y).mul_add(th, x.hi) + x.lo;
     let tl = rl / y;
     return addfast_dd(th, tl);
 }
@@ -309,8 +305,8 @@ pub fn mul_qq(x: Df64, y: Df64) -> Df64
     // Algorithm 12: cost 9 flops, error 4 u^2 (corrected)
     let c = mul_dd(x.hi, y.hi);
     let tl0 = x.lo * y.lo;
-    let tl1 = fma(x.hi, y.lo, tl0);
-    let cl2 = fma(x.lo, y.hi, tl1);
+    let tl1 = x.hi.mul_add(y.lo, tl0);
+    let cl2 = x.lo.mul_add(y.hi, tl1);
     let cl3 = c.lo + cl2;
     return addfast_dd(c.hi, cl3);
 }
@@ -331,7 +327,7 @@ pub fn reciprocal_q(y: Df64) -> Df64
 {
     // Part of Algorithm 18: cost 19 flops, error 2.3 u^2
     let th = 1.0 / y.hi;
-    let rh = fma(-y.hi, th, 1.0);
+    let rh = (-y.hi).mul_add(th, 1.0);
     let rl = -y.lo * th;
     let e = addfast_dd(rh, rl);
     let delta = mul_qd(e, th);
@@ -347,21 +343,20 @@ pub fn reciprocal_q(y: Df64) -> Df64
 #[inline]
 pub fn sqrt_q(a: Df64) -> Df64
 {
-    // Karp, Table II, cost 8 flops, error 2 u^2
+    // Karp, Table II, cost 9 flops, error 2 u^2
     // The double result provides a approximation to sqrt(a). It performs
     // all the special-case handling, which is why we defer to it in these
     // cases.
     let y0 = a.hi.sqrt();
-    if !is_positive_normal(a.hi) {
-        return Df64::from(y0);
-    }
 
     // This is based on Newton-Ralphson for f(x) = a - 1/x^2:
     //
     //   x0 = approx(1/sqrt(A))
     //   x  = x + 0.5 * x * (1.0 - A * x * x)
     //
-    let delta_y = (fma(-y0, y0, a.hi) + a.lo) / (y0 + y0);
+    let enumer = (-y0).mul_add(y0, a.hi) + a.lo;
+    let denom = y0 + y0 + tiny();
+    let delta_y = enumer / denom;
 
     // delta_y may alter the least significant digit of y0.
     return addfast_dd(y0, delta_y);
@@ -373,7 +368,7 @@ pub fn square_q(x: Df64) -> Df64
     // Simple squaring algorithm
     // Cost 7 flops
     let y = mul_dd(x.hi, x.hi);
-    let y_lo = fma(x.lo + x.lo, x.hi, y.lo);
+    let y_lo = (x.lo + x.lo).mul_add(x.hi, y.lo);
     return addfast_dd(y.hi, y_lo);
 }
 
