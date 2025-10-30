@@ -295,4 +295,60 @@ mod test {
             x /= 0.947;
         }
     }
+
+    #[test]
+    fn test_acirc()
+    {
+        let ulps = 1e-31 / Df64::EPSILON.hi;
+
+        // asin
+        check_unary(asin, |x| x.asin(), Df64::ZERO, ulps);
+        check_unary(asin, |x| x.asin(), Df64::from(0.5), ulps);
+        check_unary(asin, |x| x.asin(), Df64::from(-0.5), ulps);
+        check_unary(asin, |x| x.asin(), Df64::from(1.0), ulps);
+        check_unary(asin, |x| x.asin(), Df64::from(-1.0), ulps);
+        // acos
+        check_unary(acos, |x| x.acos(), Df64::ZERO, ulps);
+        check_unary(acos, |x| x.acos(), Df64::from(0.5), ulps);
+        check_unary(acos, |x| x.acos(), Df64::from(-0.5), ulps);
+        check_unary(acos, |x| x.acos(), Df64::from(1.0), ulps);
+        check_unary(acos, |x| x.acos(), Df64::from(-1.0), ulps);
+        // atan
+        check_unary(atan, |x| x.atan(), Df64::ZERO, ulps);
+        check_unary(atan, |x| x.atan(), Df64::from(0.5), ulps);
+        check_unary(atan, |x| x.atan(), Df64::from(-0.5), ulps);
+        // atan2
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::ZERO, Df64::ZERO, ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::from(0.3), Df64::ZERO, ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::ZERO, Df64::from(1.0), ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::from(-0.5), Df64::ZERO, ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::ZERO, Df64::from(-0.1), ulps);
+
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::from(0.5), Df64::from(0.5), ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::from(0.5), Df64::from(-0.5), ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::from(-0.5), Df64::from(0.5), ulps);
+        check_binary(atan2, |y, x| y.atan2(&x), Df64::from(-0.5), Df64::from(-0.5), ulps);
+
+        // small values must be very accurate
+        let mut x = Df64::from(1.0);
+        while x > Df64::from(1e-300) {
+            // asin
+            check_unary(asin, |x| x.asin(),  x, ulps);
+            check_unary(asin, |x| x.asin(), -x, ulps);
+            // acos
+            check_unary(acos, |x| x.acos(),  x, ulps);
+            check_unary(acos, |x| x.acos(), -x, ulps);
+            // atan
+            check_unary(atan, |x| x.atan(),  x, ulps);
+            check_unary(atan, |x| x.atan(), -x, ulps);
+            x *= 0.84;
+        }
+
+        let mut x = Df64::from(1.0);
+        while x < Df64::from(1e290) {
+            check_unary(atan, |x| x.atan(),  x, ulps);
+            check_unary(atan, |x| x.atan(), -x, ulps);
+            x /= 0.84;
+        }
+    }
 }
