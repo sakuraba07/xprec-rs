@@ -381,6 +381,7 @@ mod test
     use super::*;
     use crate::*;
     use super::super::test_utils::*;
+    use crate::test_utils::PREC;
 
     #[test]
     fn test_arith_dd()
