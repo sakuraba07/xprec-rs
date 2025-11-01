@@ -381,6 +381,8 @@ mod test
     use super::*;
     use crate::*;
     use super::super::test_utils::*;
+    use crate::test_utils::PREC;
+    use rug::Float;
 
     #[test]
     fn test_arith_dd()
@@ -586,6 +588,98 @@ mod test
                 check_unary(reciprocal_q, |x| 1.0 / x, x, 1.5);
             }
             x = div_qd(x, 0.992);
+        }
+    }
+
+    #[test]
+    fn test_sum_stress(){
+        let u = 0.5 * f64::EPSILON;
+
+        let x = Df64 {hi: 1.0,  lo: u - u*u}    ;
+        let y = Df64 {hi: 0.5 * (-1.0 + u), lo: u*u * (-0.5 + u)};
+        let r: Df64 = x + y;
+        let r_ex = Float::with_val(PREC, x) + Float::with_val(PREC, y);
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 3.0 * u * u) * r_ex.clone().abs();
+            assert!(diff <= thr, "sum_stress: diff={} thr={}", diff, thr);
+        }
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 2.5 * u * u) * r_ex.clone().abs();
+            assert!(diff > thr, "sum_stress (neg): diff={} thr={}", diff, thr);
+        }
+    }
+
+    // helper: integer ldexp
+    fn ldexp_i(a: i64, e: i32) -> f64 {
+        (a as f64) * (2f64).powi(e)
+    }
+    #[test]
+    fn test_mul_stress(){
+
+
+        let u = 0.5 * f64::EPSILON;
+        let x = Df64 {hi: ldexp_i(2251799825991851, -51), lo: ldexp_i(9007199203085987, -106)};
+        let y = Df64 {hi: ldexp_i(4503599627471459, -52), lo: ldexp_i(4503599627284651, -105)};
+
+        let r = x * y;
+        let r_ex = Float::with_val(PREC, x) * Float::with_val(PREC, y);
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 4.0 * u * u) * r_ex.clone().abs();
+            assert!(diff <= thr, "mul_stress: diff={} thr={}", diff, thr);
+        }
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 3.5 * u * u) * r_ex.clone().abs();
+            assert!(diff > thr, "mul_stress (neg): diff={} thr={}", diff, thr);
+        }
+    }
+
+    #[test]
+    fn test_divdq_stress(){
+        let u = 0.5 * f64::EPSILON;
+        let x = Df64 {hi: 4588860379563012., lo: ldexp_i(-4474949195791253, -53)};
+        let y = 4578284000230917.0;
+        let r = x / y;
+        let r_ex = Float::with_val(PREC, x) / Float::with_val(PREC, y);
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 3.0 * u * u) * r_ex.clone().abs();
+            assert!(diff <= thr, "div_stress: diff={} thr={}", diff, thr);
+        }
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 2.5 * u * u) * r_ex.clone().abs();
+            assert!(diff > thr, "div_stress (neg): diff={} thr={}", diff, thr);
+        }
+    }
+
+    #[test]
+    fn test_divqq_stress(){
+        let u = 0.5 * f64::EPSILON;
+        let x = Df64 {hi: 4528288502329187.0 , lo: ldexp_i(1125391118633487, -51)};
+        let y = Df64 {hi: 4522593432466394.0, lo: ldexp_i(-9006008290016505, -54)};
+        let r = x / y;
+        let r_ex = Float::with_val(PREC, x) / Float::with_val(PREC, y);
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 6.0 * u * u) * r_ex.clone().abs();
+            assert!(diff <= thr, "div_stress: diff={} thr={}", diff, thr);
+        }
+        {
+            let rr = Float::with_val(PREC, r);
+            let diff = Float::with_val(PREC, &rr - &r_ex).abs();
+            let thr  = Float::with_val(PREC, 0.9 * u * u) * r_ex.clone().abs();
+            assert!(diff > thr, "div_stress (neg): diff={} thr={}", diff, thr);
         }
     }
 

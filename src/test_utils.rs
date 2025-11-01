@@ -6,7 +6,7 @@ use rug::float::Round;
 use rug::ops::AssignRound;
 use rug::Assign;
 
-const PREC: u32 = 120;
+pub const PREC: u32 = 120;
 
 impl AssignRound<Df64> for Float {
     type Round = Round;
