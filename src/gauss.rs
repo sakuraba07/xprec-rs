@@ -58,8 +58,9 @@ fn plx(ell: i64, x: Df64) -> (Df64, Df64)
     // Bonnet's recursion formula
     for k in 1..ell {
         // next term
-        let kk: Df64 = Df64::from(k as f64);
-        let p2 = ((2.0 * kk + Df64::ONE) * x * p1 - kk * p0) / (kk + Df64::ONE);
+        let kk = k as f64;
+        let p2 = ((2.0 * kk + 1.0) * x * p1 - kk * p0) / (kk + 1.0);
+
         // shift terms by one
         p0 = p1;
         p1 = p2;
