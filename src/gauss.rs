@@ -6,8 +6,8 @@
 // Copyright (C) 2023-2025 Markus Wallerberger and others
 // SPDX-License-Identifier: MIT
 use super::Df64;
-use super::arith::*;
-use super::circular::*;
+use super::arith::square_q;
+use super::circular::{cos, sincos};
 use super::consts;
 
 pub fn gauss_legendre(x: &mut [Df64], w: &mut [Df64])
