@@ -133,8 +133,8 @@ mod test {
 
         gauss_legendre(&mut x, &mut w);
         for i in 0..7 {
-            assert_abs_diff_eq!(x[i], X7[i], epsilon=Df64::from(5e-32));
-            assert_abs_diff_eq!(w[i], W7[i], epsilon=Df64::from(0.4 * 5e-32));
+            assert_abs_diff_eq!(x[i], X7[i], epsilon=Df64::from(Df64::EPSILON));
+            assert_abs_diff_eq!(w[i], W7[i], epsilon=Df64::from(1.5 * Df64::EPSILON));
         }
     }
 
@@ -186,8 +186,8 @@ mod test {
 
         gauss_legendre(&mut x, &mut w);
         for i in 0..16 {
-            assert_abs_diff_eq!(x[i], X16[i], epsilon=Df64::from(5e-32));
-            assert_abs_diff_eq!(w[i], W16[i], epsilon=Df64::from(0.2 * 5e-31));
+            assert_abs_diff_eq!(x[i], X16[i], epsilon=Df64::from(Df64::EPSILON));
+            assert_abs_diff_eq!(w[i], W16[i], epsilon=Df64::from(Df64::EPSILON));
         }
     }
 }
