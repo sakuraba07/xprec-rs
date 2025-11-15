@@ -25,10 +25,10 @@ pub fn gauss_legendre(x: &mut [Df64], w: &mut [Df64])
 fn gauss_chebyshev_theta(θ: &mut [Df64])
 {
     let n = θ.len();
-    let fact = consts::PI / (n as f64);
+    let fact = consts::PI_HALF / (n as f64);
     for i in 0..n {
         // goes from (npos-0.5)/n * pi back to 0.5 * pi/n
-        θ[i] = ((n - i) as f64 - 0.5) * fact;
+        θ[i] = (2 * n - 2 * i - 1) as f64 * fact;
     }
 }
 
