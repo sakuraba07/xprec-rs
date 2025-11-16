@@ -1,7 +1,7 @@
 //! Gauss quadrature rules
 //!
 //! Algorithms are directly lifted from:
-//!  - SIAM J. SCI. COMPUT., Vol. 35, No. 2, p. A652
+//!  - SIAM J. Sci. Comput. 35(2), A652
 //
 // Copyright (C) 2023-2025 Markus Wallerberger and others
 // SPDX-License-Identifier: MIT
@@ -10,40 +10,75 @@ use super::arith::*;
 use super::circular::*;
 use super::consts;
 
+/// Gauss-Legendre quadrature nodes and weights (x, w)
+///
+/// Fills the arrays `x`, `w` with the [Gauss--Legendre quadrature] nodes and
+/// weights, respectively, of order `n = x.len()`.  `x` and `w` must be of the
+/// same size.
+///
+/// `x` is a set of nodes in (-1, 1) which should be accurate to machine
+/// epsilon. `w` is a set of quadrature weights, which are less accurate for
+/// large order. The cost of computing the quadrature scales as 𝑂(𝑛²).
+///
+/// [Gauss--Legendre quadrature]: https://en.wikipedia.org/wiki/Gauss%E2%80%93Legendre_quadrature
 pub fn gauss_legendre(x: &mut [Df64], w: &mut [Df64])
 {
     let n = x.len();
-    gauss_chebyshev_theta(x);
+    let mut θp = vec![Df64::from(0.0); n];
+
+    gauss_chebyshev_theta(x, &mut θp);
     for _iter in 0..10 {
-        legendre_theta_newton(n as i64, x, w);
+        legendre_theta_newton(n as i64, x, &mut θp, w);
     }
     for i in 0..n {
-        x[i] = cos(x[i]);
+        let (_s, c) = sincos_small(x[i], θp[i]);
+        x[i] = c;
     }
 }
 
-fn gauss_chebyshev_theta(θ: &mut [Df64])
+fn gauss_chebyshev_theta(θ: &mut [Df64], θp: &mut [Df64])
 {
+    assert!(θ.len() == θp.len());
     let n = θ.len();
     let fact = consts::PI_HALF / (n as f64);
     for i in 0..n {
+        // constant
+        let mult = 2 * n as i64 - 2 * i as i64 - 1;
+
         // goes from (npos-0.5)/n * pi back to 0.5 * pi/n
-        θ[i] = (2 * n - 2 * i - 1) as f64 * fact;
+        θ[i] = mult as f64 * fact;
+
+        // θp = θ - π/2
+        θp[i] = (mult - n as i64) as f64 * fact;
     }
 }
 
-fn legendre_theta_newton(n: i64, θ: &mut [Df64], w: &mut [Df64])
+fn legendre_theta_newton(n: i64, θ: &mut [Df64], θp: &mut [Df64], w: &mut [Df64])
 {
     // Newton iteration for theta rather than x
     // SIAM J. SCI. COMPUT., Vol. 35, No. 2, p. A652
     #[allow(non_snake_case)]
     for i in 0..θ.len() {
-        let (s, c) = sincos(θ[i]);
+        let (s, c) = sincos_small(θ[i], θp[i]);
         let (pn_1, pn) = plx(n, c);
         let pn_θ = (n as f64) * (c * pn - pn_1) / s;
         let Δθ = pn / pn_θ;
         θ[i] -= Δθ;
+        θp[i] -= Δθ;
         w[i] = 2.0 / square_q(pn_θ);
+    }
+}
+
+/// Compute sincos(θ) while chosing smaller angle for accuracy.
+fn sincos_small(θ: Df64, θp: Df64) -> (Df64, Df64)
+{
+    if θ.hi.abs() < θp.hi.abs() {
+        return sincos(θ);
+    } else {
+        // θ′ = θ - π/2, thus:
+        // cos(θ) = -sin(θ′); sin(θ) = cos(θ′)
+        let (s, c) = sincos(θp);
+        return (c, -s);
     }
 }
 
@@ -99,7 +134,7 @@ mod test {
         gauss_legendre(&mut x, &mut w);
         for i in 0..5 {
             assert_abs_diff_eq!(x[i], X5[i], epsilon=Df64::EPSILON);
-            assert_abs_diff_eq!(w[i], W5[i], epsilon=2.0*Df64::EPSILON);
+            assert_abs_diff_eq!(w[i], W5[i], epsilon=Df64::EPSILON);
         }
     }
 
@@ -134,7 +169,7 @@ mod test {
         gauss_legendre(&mut x, &mut w);
         for i in 0..7 {
             assert_abs_diff_eq!(x[i], X7[i], epsilon=Df64::from(Df64::EPSILON));
-            assert_abs_diff_eq!(w[i], W7[i], epsilon=Df64::from(1.5 * Df64::EPSILON));
+            assert_abs_diff_eq!(w[i], W7[i], epsilon=Df64::from(Df64::EPSILON));
         }
     }
 
