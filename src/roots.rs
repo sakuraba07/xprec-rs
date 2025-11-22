@@ -1,5 +1,5 @@
 use super::Df64;
-use super::arith::*;
+use super::arith::{addfast_dd, addfast_qq, mul_pow2, reciprocal_d, sqrt_q, square_q};
 
 pub fn hypot(x: Df64, y: Df64) -> Df64
 {
@@ -75,6 +75,7 @@ pub fn inv_sqrt(x: Df64) -> Df64
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::arith::{div_qd, mul_qd};
     use crate::checks::*;
     use crate::test_utils::*;
 

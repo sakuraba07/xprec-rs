@@ -6,8 +6,8 @@
 // Copyright (C) 2023-2025 Markus Wallerberger and others
 // SPDX-License-Identifier: MIT
 use super::Df64;
-use super::arith::*;
-use super::circular::*;
+use super::arith::square_q;
+use super::circular::{cos, sincos};
 use super::consts;
 
 /// Gauss-Legendre quadrature nodes and weights (x, w)

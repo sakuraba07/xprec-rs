@@ -1,6 +1,10 @@
-use super::*;
-use super::arith::*;
-use super::checks::*;
+use super::Df64;
+use super::arith::{
+    addfast_dq, addfast_qd, addfast_qq, mul_pow2, square_q, subfast_qd, subfast_qq,
+};
+use super::checks::is_nan;
+use super::consts;
+use super::funcs;
 use super::utils::reciprocal_factorial;
 use libm::ldexp;
 
@@ -412,6 +416,7 @@ const fn expm1_alphas(n: i32) -> Df64
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::super::checks::{is_finite, is_infinite, is_zero};
     use super::super::test_utils::*;
 
     #[test]

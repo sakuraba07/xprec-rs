@@ -1,9 +1,12 @@
 use super::Df64;
-use super::arith::*;
-use super::checks::*;
-use super::funcs::*;
-use super::roots::*;
-use super::exp::*;
+use super::arith::{
+    addfast_dq, addfast_qq, mul_pow2, reciprocal_q, sqrt_q, square_q, subfast_dq, subfast_qd,
+    subfast_qq,
+};
+use super::checks::{is_finite, is_nan};
+use super::exp::{exp_split, expm1, log, log1p};
+use super::funcs::{abs, copysign, ldexp};
+use super::roots::{hypot, inv_sqrt};
 
 pub const COSH_MAX: f64 = 710.4758600739439;
 
@@ -169,6 +172,7 @@ pub fn atanh(x: Df64) -> Df64
 mod test{
     use super::*;
     use super::super::test_utils::*;
+    use super::super::checks::is_infinite;
 
     #[test]
     fn test_cosh()
