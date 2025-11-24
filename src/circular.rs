@@ -1,11 +1,14 @@
 use std::f64;
 
-use super::utils::reciprocal_factorial;
 use super::Df64;
-use super::arith::*;
+use super::arith::{
+    addfast_dq, addfast_qd, addfast_qq, mul_dd, mul_pow2, reciprocal_q, sqrt_q, square_q,
+    subfast_dq, subfast_qq,
+};
+use super::checks::{is_finite, is_nan, is_zero};
 use super::consts;
-use super::checks::*;
-use super::funcs::*;
+use super::funcs::{abs, copysign};
+use super::utils::reciprocal_factorial;
 
 pub fn sin(x: Df64) -> Df64
 {

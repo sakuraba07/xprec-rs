@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 use super::Df64;
-use super::arith::*;
+use super::arith::{
+    add_qd, addfast_dd, div_dq, div_qd, div_qq, mul_dq, mul_qq, subfast_dq, subfast_qq,
+};
 
 pub fn ceil(x: Df64) -> Df64
 {

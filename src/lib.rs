@@ -11,7 +11,6 @@
 
 use core::f64;
 use std::ops::{Add, Sub};
-use num_traits::Zero;
 
 /// Type for compensated arithmetic.
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
