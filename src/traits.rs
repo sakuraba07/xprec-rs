@@ -302,6 +302,328 @@ impl Signed for Df64 {
     }
 }
 
+/// Implementation of the `num_traits::Float` trait for `Df64`.
+///
+/// This provides standard floating-point operations without depending on
+/// higher-level traits like `ComplexField`. All methods delegate directly
+/// to low-level modules (checks, round, exp, circular, hyperbolic, etc.)
+/// for consistency and performance.
+impl num_traits::Float for Df64 {
+    // ===== Constants (8 methods) =====
+
+    #[inline(always)]
+    fn nan() -> Self {
+        Df64::NAN
+    }
+
+    #[inline(always)]
+    fn infinity() -> Self {
+        Df64::INFINITY
+    }
+
+    #[inline(always)]
+    fn neg_infinity() -> Self {
+        Df64::NEG_INFINITY
+    }
+
+    #[inline(always)]
+    fn neg_zero() -> Self {
+        Df64::from(-0.0)
+    }
+
+    #[inline(always)]
+    fn min_value() -> Self {
+        Df64::MIN
+    }
+
+    #[inline(always)]
+    fn min_positive_value() -> Self {
+        Df64::MIN_POSITIVE
+    }
+
+    #[inline(always)]
+    fn max_value() -> Self {
+        Df64::MAX
+    }
+
+    #[inline(always)]
+    fn epsilon() -> Self {
+        Df64::EPSILON
+    }
+
+    // ===== Classification methods (7 methods) =====
+
+    #[inline(always)]
+    fn is_nan(self) -> bool {
+        checks::is_nan(self)
+    }
+
+    #[inline(always)]
+    fn is_infinite(self) -> bool {
+        checks::is_infinite(self)
+    }
+
+    #[inline(always)]
+    fn is_finite(self) -> bool {
+        checks::is_finite(self)
+    }
+
+    #[inline(always)]
+    fn is_normal(self) -> bool {
+        checks::is_normal(self)
+    }
+
+    #[inline(always)]
+    fn classify(self) -> std::num::FpCategory {
+        checks::classify(self)
+    }
+
+    #[inline(always)]
+    fn is_sign_positive(self) -> bool {
+        !checks::is_sign_negative(self)
+    }
+
+    #[inline(always)]
+    fn is_sign_negative(self) -> bool {
+        checks::is_sign_negative(self)
+    }
+
+    // ===== Basic arithmetic (5 methods) =====
+
+    #[inline(always)]
+    fn abs(self) -> Self {
+        funcs::abs(self)
+    }
+
+    #[inline(always)]
+    fn signum(self) -> Self {
+        Df64::from(self.hi.signum())
+    }
+
+    #[inline(always)]
+    fn recip(self) -> Self {
+        arith::reciprocal_q(self)
+    }
+
+    // ===== Rounding methods (5 methods) =====
+
+    #[inline(always)]
+    fn floor(self) -> Self {
+        round::floor(self)
+    }
+
+    #[inline(always)]
+    fn ceil(self) -> Self {
+        round::ceil(self)
+    }
+
+    #[inline(always)]
+    fn round(self) -> Self {
+        round::round(self)
+    }
+
+    #[inline(always)]
+    fn trunc(self) -> Self {
+        round::trunc(self)
+    }
+
+    #[inline(always)]
+    fn fract(self) -> Self {
+        funcs::fract(self)
+    }
+
+    // ===== Comparison methods (5 methods) =====
+
+    #[inline(always)]
+    fn abs_sub(self, other: Self) -> Self {
+        funcs::abs(arith::sub_qq(self, other))
+    }
+
+    #[inline(always)]
+    fn mul_add(self, a: Self, b: Self) -> Self {
+        // There are two requirements that one has with fma: (1) it must be
+        // accurate without intermediate rounding and (2) it must be at least
+        // as fast as (a*b)+c. We have no way of satisfying both, so we go
+        // for performance.
+        (self * a) + b
+    }
+
+    #[inline(always)]
+    fn min(self, other: Self) -> Self {
+        funcs::min(self, other)
+    }
+
+    #[inline(always)]
+    fn max(self, other: Self) -> Self {
+        funcs::max(self, other)
+    }
+
+    #[inline(always)]
+    fn copysign(self, sign: Self) -> Self {
+        funcs::copysign(self, sign)
+    }
+
+    // ===== Additional comparison methods (1 method) =====
+
+    #[inline(always)]
+    fn hypot(self, other: Self) -> Self {
+        roots::hypot(self, other)
+    }
+
+    // ===== Exponential and logarithmic functions (11 methods) =====
+
+    #[inline(always)]
+    fn powi(self, n: i32) -> Self {
+        exp::powi(self, n)
+    }
+
+    #[inline(always)]
+    fn powf(self, n: Self) -> Self {
+        exp::powf(self, n)
+    }
+
+    #[inline(always)]
+    fn sqrt(self) -> Self {
+        arith::sqrt_q(self)
+    }
+
+    #[inline(always)]
+    fn exp(self) -> Self {
+        exp::exp(self)
+    }
+
+    #[inline(always)]
+    fn exp2(self) -> Self {
+        exp::exp2(self)
+    }
+
+    #[inline(always)]
+    fn ln(self) -> Self {
+        exp::log(self)
+    }
+
+    #[inline(always)]
+    fn log(self, base: Self) -> Self {
+        exp::log_base(self, base)
+    }
+
+    #[inline(always)]
+    fn log2(self) -> Self {
+        exp::log2(self)
+    }
+
+    #[inline(always)]
+    fn log10(self) -> Self {
+        exp::log10(self)
+    }
+
+    #[inline(always)]
+    fn exp_m1(self) -> Self {
+        exp::expm1(self)
+    }
+
+    #[inline(always)]
+    fn ln_1p(self) -> Self {
+        exp::log1p(self)
+    }
+
+    // ===== Trigonometric functions (7 methods) =====
+
+    #[inline(always)]
+    fn sin(self) -> Self {
+        circular::sin(self)
+    }
+
+    #[inline(always)]
+    fn cos(self) -> Self {
+        circular::cos(self)
+    }
+
+    #[inline(always)]
+    fn tan(self) -> Self {
+        circular::tan(self)
+    }
+
+    #[inline(always)]
+    fn asin(self) -> Self {
+        circular::asin(self)
+    }
+
+    #[inline(always)]
+    fn acos(self) -> Self {
+        circular::acos(self)
+    }
+
+    #[inline(always)]
+    fn atan(self) -> Self {
+        circular::atan(self)
+    }
+
+    #[inline(always)]
+    fn atan2(self, other: Self) -> Self {
+        circular::atan2(self, other)
+    }
+
+    #[inline(always)]
+    fn sin_cos(self) -> (Self, Self) {
+        circular::sincos(self)
+    }
+
+    // ===== Hyperbolic functions (6 methods) =====
+
+    #[inline(always)]
+    fn sinh(self) -> Self {
+        hyperbolic::sinh(self)
+    }
+
+    #[inline(always)]
+    fn cosh(self) -> Self {
+        hyperbolic::cosh(self)
+    }
+
+    #[inline(always)]
+    fn tanh(self) -> Self {
+        hyperbolic::tanh(self)
+    }
+
+    #[inline(always)]
+    fn asinh(self) -> Self {
+        hyperbolic::asinh(self)
+    }
+
+    #[inline(always)]
+    fn acosh(self) -> Self {
+        hyperbolic::acosh(self)
+    }
+
+    #[inline(always)]
+    fn atanh(self) -> Self {
+        hyperbolic::atanh(self)
+    }
+
+    // ===== Angle conversion methods (2 methods) =====
+
+    #[inline(always)]
+    fn to_degrees(self) -> Self {
+        self * consts::ONE_OVER_PI * <Df64 as From<f64>>::from(180.0)
+    }
+
+    #[inline(always)]
+    fn to_radians(self) -> Self {
+        self * consts::PI / <Df64 as From<f64>>::from(180.0)
+    }
+
+    // ===== Not yet implemented (2 methods) =====
+
+    fn cbrt(self) -> Self {
+        todo!("cbrt: requires Newton iteration or similar algorithm")
+    }
+
+    fn integer_decode(self) -> (u64, i16, i8) {
+        todo!("integer_decode: requires double-double specific design")
+    }
+}
+
 impl SubsetOf<Self> for Df64 {
     #[inline(always)]
     fn to_superset(&self) -> Df64 {
