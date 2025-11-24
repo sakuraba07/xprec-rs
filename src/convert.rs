@@ -128,12 +128,6 @@ impl num_traits::FromPrimitive for Df64 {
     #[inline] fn from_f64(n: f64)     -> Option<Df64> { return Some(Df64::from(n)); }
 }
 
-impl num_traits::NumCast for Df64 {
-    fn from<T: num_traits::ToPrimitive>(n: T) -> Option<Self> {
-        return num_traits::FromPrimitive::from_f64(n.to_f64()?);
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;

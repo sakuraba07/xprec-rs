@@ -221,7 +221,7 @@ impl Num for Df64 {
     {
         // XXX precision is insufficient
         let x64 = f64::from_str_radix(str, radix)?;
-        return Ok(<Df64 as From<f64>>::from(x64));
+        return Ok(Df64::from(x64));
     }
 }
 
@@ -288,7 +288,7 @@ impl Signed for Df64 {
 
     #[inline(always)]
     fn signum(&self) -> Self {
-        return <Df64 as From<f64>>::from(self.hi.signum());
+        return Df64::from(self.hi.signum());
     }
 
     #[inline(always)]
@@ -299,332 +299,6 @@ impl Signed for Df64 {
     #[inline(always)]
     fn is_negative(&self) -> bool {
         return self.hi.is_sign_negative();
-    }
-}
-
-impl Float for Df64 {
-    // ---------------------------------------------------------------------------
-    // Constants
-
-    #[inline(always)]
-    fn nan() -> Self {
-        return Df64::NAN;
-    }
-
-    #[inline(always)]
-    fn infinity() -> Self {
-        return Df64::INFINITY;
-    }
-
-    #[inline(always)]
-    fn neg_infinity() -> Self {
-        return Df64::NEG_INFINITY;
-    }
-
-    #[inline(always)]
-    fn neg_zero() -> Self {
-        return <Df64 as From<f64>>::from(-0.0);
-    }
-
-    #[inline(always)]
-    fn min_value() -> Self {
-        return Df64::MIN;
-    }
-
-    #[inline(always)]
-    fn max_value() -> Self {
-        return Df64::MAX;
-    }
-
-    #[inline(always)]
-    fn min_positive_value() -> Self {
-        return Df64::MIN_POSITIVE;
-    }
-
-    #[inline(always)]
-    fn epsilon() -> Self {
-        return Df64::EPSILON;
-    }
-
-    // ---------------------------------------------------------------------------
-    // Checks
-
-    #[inline(always)]
-    fn is_nan(self) -> bool {
-        return checks::is_nan(self);
-    }
-
-    #[inline(always)]
-    fn is_infinite(self) -> bool {
-        return checks::is_infinite(self);
-    }
-
-    #[inline(always)]
-    fn is_finite(self) -> bool {
-        return checks::is_finite(self);
-    }
-
-    #[inline(always)]
-    fn is_normal(self) -> bool {
-        return checks::is_normal(self);
-    }
-
-    #[inline(always)]
-    fn is_subnormal(self) -> bool {
-        return checks::is_subnormal(self);
-    }
-
-    #[inline]
-    fn classify(self) -> std::num::FpCategory {
-        return checks::classify(self);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Basic operations (delegated to Signed trait)
-
-    #[inline(always)]
-    fn abs(self) -> Self {
-        return Signed::abs(&self);
-    }
-
-    #[inline(always)]
-    fn signum(self) -> Self {
-        return Signed::signum(&self);
-    }
-
-    #[inline(always)]
-    fn is_sign_positive(self) -> bool {
-        return Signed::is_positive(&self);
-    }
-
-    #[inline(always)]
-    fn is_sign_negative(self) -> bool {
-        return Signed::is_negative(&self);
-    }
-
-    #[inline]
-    fn abs_sub(self, other: Self) -> Self {
-        return Signed::abs_sub(&self, &other);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Rounding operations (delegated to ComplexField trait)
-
-    #[inline(always)]
-    fn floor(self) -> Self {
-        return ComplexField::floor(self);
-    }
-
-    #[inline(always)]
-    fn ceil(self) -> Self {
-        return ComplexField::ceil(self);
-    }
-
-    #[inline(always)]
-    fn round(self) -> Self {
-        return ComplexField::round(self);
-    }
-
-    #[inline(always)]
-    fn trunc(self) -> Self {
-        return ComplexField::trunc(self);
-    }
-
-    #[inline(always)]
-    fn fract(self) -> Self {
-        return ComplexField::fract(self);
-    }
-
-    #[inline]
-    fn mul_add(self, a: Self, b: Self) -> Self {
-        return ComplexField::mul_add(self, a, b);
-    }
-
-    #[inline(always)]
-    fn recip(self) -> Self {
-        return ComplexField::recip(self);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Comparison operations (delegated to RealField trait)
-
-    #[inline(always)]
-    fn max(self, other: Self) -> Self {
-        return RealField::max(self, other);
-    }
-
-    #[inline(always)]
-    fn min(self, other: Self) -> Self {
-        return RealField::min(self, other);
-    }
-
-    #[inline(always)]
-    fn atan2(self, other: Self) -> Self {
-        return RealField::atan2(self, other);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Exponential and logarithmic functions (delegated to ComplexField trait)
-
-    #[inline(always)]
-    fn sqrt(self) -> Self {
-        return ComplexField::sqrt(self);
-    }
-
-    #[inline(always)]
-    fn exp(self) -> Self {
-        return ComplexField::exp(self);
-    }
-
-    #[inline(always)]
-    fn exp2(self) -> Self {
-        return ComplexField::exp2(self);
-    }
-
-    #[inline(always)]
-    fn exp_m1(self) -> Self {
-        return ComplexField::exp_m1(self);
-    }
-
-    #[inline(always)]
-    fn ln(self) -> Self {
-        return ComplexField::ln(self);
-    }
-
-    #[inline(always)]
-    fn ln_1p(self) -> Self {
-        return ComplexField::ln_1p(self);
-    }
-
-    #[inline(always)]
-    fn log(self, base: Self) -> Self {
-        return ComplexField::log(self, base);
-    }
-
-    #[inline(always)]
-    fn log2(self) -> Self {
-        return ComplexField::log2(self);
-    }
-
-    #[inline(always)]
-    fn log10(self) -> Self {
-        return ComplexField::log10(self);
-    }
-
-    #[inline(always)]
-    fn powi(self, n: i32) -> Self {
-        return ComplexField::powi(self, n);
-    }
-
-    #[inline(always)]
-    fn powf(self, n: Self) -> Self {
-        return ComplexField::powf(self, n);
-    }
-
-    #[inline(always)]
-    fn hypot(self, other: Self) -> Self {
-        return ComplexField::hypot(self, other);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Trigonometric functions (delegated to ComplexField trait)
-
-    #[inline(always)]
-    fn sin(self) -> Self {
-        return ComplexField::sin(self);
-    }
-
-    #[inline(always)]
-    fn cos(self) -> Self {
-        return ComplexField::cos(self);
-    }
-
-    #[inline(always)]
-    fn tan(self) -> Self {
-        return ComplexField::tan(self);
-    }
-
-    #[inline(always)]
-    fn asin(self) -> Self {
-        return ComplexField::asin(self);
-    }
-
-    #[inline(always)]
-    fn acos(self) -> Self {
-        return ComplexField::acos(self);
-    }
-
-    #[inline(always)]
-    fn atan(self) -> Self {
-        return ComplexField::atan(self);
-    }
-
-    #[inline(always)]
-    fn sin_cos(self) -> (Self, Self) {
-        return ComplexField::sin_cos(self);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Hyperbolic functions (delegated to ComplexField trait)
-
-    #[inline(always)]
-    fn sinh(self) -> Self {
-        return ComplexField::sinh(self);
-    }
-
-    #[inline(always)]
-    fn cosh(self) -> Self {
-        return ComplexField::cosh(self);
-    }
-
-    #[inline(always)]
-    fn tanh(self) -> Self {
-        return ComplexField::tanh(self);
-    }
-
-    #[inline(always)]
-    fn asinh(self) -> Self {
-        return ComplexField::asinh(self);
-    }
-
-    #[inline(always)]
-    fn acosh(self) -> Self {
-        return ComplexField::acosh(self);
-    }
-
-    #[inline(always)]
-    fn atanh(self) -> Self {
-        return ComplexField::atanh(self);
-    }
-
-    // ---------------------------------------------------------------------------
-    // Conversion functions
-
-    #[inline(always)]
-    fn to_degrees(self) -> Self {
-        use crate::consts;
-        return self * <Df64 as From<f64>>::from(180.0) / consts::PI;
-    }
-
-    #[inline(always)]
-    fn to_radians(self) -> Self {
-        use crate::consts;
-        return self * consts::PI / <Df64 as From<f64>>::from(180.0);
-    }
-
-    // ---------------------------------------------------------------------------
-    // TODO: Methods requiring additional implementation
-
-    // TODO: Implement cbrt() when ComplexField::cbrt() is available.
-    // Currently ComplexField::cbrt() returns todo!().
-    fn cbrt(self) -> Self {
-        todo!("cbrt() implementation requires ComplexField::cbrt() to be implemented first")
-    }
-
-    // TODO: Implement integer_decode() to properly decode Df64's internal
-    // representation. This requires careful handling of the hi and lo parts.
-    fn integer_decode(self) -> (u64, i16, i8) {
-        todo!("integer_decode() implementation requires careful handling of Df64's double-double representation")
     }
 }
 
@@ -667,7 +341,7 @@ macro_rules! impl_superset (
             #[inline(always)]
             fn from_subset(element: &$subset) -> Self {
                 // XXX remove .. as f64
-                return <Df64 as From<f64>>::from(*element as f64);
+                return Df64::from(*element as f64);
             }
         }
     }
@@ -1063,71 +737,13 @@ impl RealField for Df64 {
 mod test
 {
     use super::*;
-    use num_traits::Float;
 
     #[test]
     fn test_traits()
     {
         let x = Df64::ONE * 2.0;
         let y = Df64::ONE / 4.0;
-        assert_eq!(1.0 + x * y - 2.0, <Df64 as From<f64>>::from(-0.5));
-    }
-
-    #[test]
-    fn test_float_constants() {
-        // NaN cannot be compared with ==, so we check is_nan() instead
-        assert!(<Df64 as Float>::nan().is_nan());
-        assert_eq!(<Df64 as Float>::infinity(), Df64::INFINITY);
-        assert_eq!(<Df64 as Float>::neg_infinity(), Df64::NEG_INFINITY);
-        assert_eq!(<Df64 as Float>::epsilon(), Df64::EPSILON);
-        assert_eq!(<Df64 as Float>::min_value(), Df64::MIN);
-        assert_eq!(<Df64 as Float>::max_value(), Df64::MAX);
-        assert_eq!(<Df64 as Float>::min_positive_value(), Df64::MIN_POSITIVE);
-    }
-
-    #[test]
-    fn test_float_neg_zero() {
-        // neg_zero() is implemented in traits.rs
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(neg_zero.hi, -0.0);
-        assert_eq!(neg_zero.lo, 0.0);
-        assert!(neg_zero.is_sign_negative());
-    }
-
-    #[test]
-    fn test_float_checks() {
-        assert!(Df64::NAN.is_nan());
-        assert!(!Df64::ONE.is_nan());
-        assert!(Df64::INFINITY.is_infinite());
-        assert!(!Df64::ONE.is_infinite());
-        assert!(Df64::ONE.is_finite());
-        assert!(!Df64::INFINITY.is_finite());
-        assert!(Df64::ONE.is_normal());
-        assert!(!Df64::NAN.is_normal());
-    }
-
-    #[test]
-    fn test_float_classify() {
-        use std::num::FpCategory;
-        // classify() is delegated but Float trait defines the contract
-        assert_eq!(Df64::ZERO.classify(), FpCategory::Zero);
-        assert_eq!(Df64::ONE.classify(), FpCategory::Normal);
-        assert_eq!(Df64::INFINITY.classify(), FpCategory::Infinite);
-        assert_eq!(Df64::NAN.classify(), FpCategory::Nan);
-    }
-
-    #[test]
-    fn test_float_conversions() {
-        // to_degrees() and to_radians() are implemented in traits.rs
-        let deg = <Df64 as From<f64>>::from(180.0);
-        let rad = deg.to_radians();
-        let expected = <Df64 as From<f64>>::from(3.141592653589793);
-        assert!(Float::abs(rad - expected) < <Df64 as From<f64>>::from(1e-10));
-
-        let rad2 = <Df64 as From<f64>>::from(3.141592653589793);
-        let deg2 = rad2.to_degrees();
-        let expected2 = <Df64 as From<f64>>::from(180.0);
-        assert!(Float::abs(deg2 - expected2) < <Df64 as From<f64>>::from(1e-10));
+        assert_eq!(1.0 + x * y - 2.0, Df64::from(-0.5));
     }
 
 }
