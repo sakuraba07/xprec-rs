@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 use super::Df64;
 use super::arith::square_q;
-use super::circular::{cos, sincos};
+use super::circular::sincos;
 use super::consts;
 
 /// Gauss-Legendre quadrature nodes and weights (x, w)

@@ -145,12 +145,14 @@ pub trait CompensatedArithmetic<T> : From<T> + Into<T>
     /// Multiply `a` with `b` while compensating exactly for the error.
     ///
     /// Multiplies two values in extended precision, where the result can be
-    /// represented exactly.
+    /// represented exactly. This is known as "2prod" or compensated
+    /// multiplication.
     fn compensated_prod(a: T, b: T) -> Self;
 
     /// Divides `a` by `b` while compensating approximately for the error.
     ///
-    /// Divides two values in extended precision.
+    /// Divides two values in extended precision. Note that generically, one
+    /// cannot represent the ratio exactly in extended precision.
     fn compensated_ratio(a: T, b: T) -> Self;
 
     /// Compensated square root operation
