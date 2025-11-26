@@ -80,10 +80,11 @@ impl Df64 {
 
     /// Construct new compensated result for given compensation
     ///
-    /// **Safety**: you must ensure that `lo` is a valid compensation term for
-    /// `hi`, i.e., for any finite `hi` it must hold that `hi + lo == hi`.
+    /// **Unchecked precondition**: you must ensure that `lo` is a valid
+    /// compensation term for `hi`, i.e., for any finite `hi` it must hold
+    /// that `hi + lo == hi`.
     #[inline(always)]
-    pub const unsafe fn new_full(hi: f64, lo: f64) -> Df64 {
+    pub const fn new_full(hi: f64, lo: f64) -> Df64 {
         debug_assert!(hi + lo == hi || !hi.is_finite());
         return Df64 { hi: hi, lo: lo };
     }
@@ -97,24 +98,21 @@ impl Df64 {
 /// difference of the operation inside `T` and the exact result (or at least
 /// more accurate result.)
 ///
-/// The following operations are required:
+/// The following operations are defined. For sum and difference, there are
+/// "fast" versions, which may be faster because they may assume that the
+/// arguments are ordered by magnitude, i.e, `a.abs() >= b.abs()`. This
+/// constraint can be slightly relaxed.[^1]
 ///
-///  | (op)       | method                      | Also known as | Exact? |
-///  |------------|-----------------------------|---------------|--------|
-///  | `a + b`    | `::compensated_sum(a, b)`   | 2sum(a, b)    | yes    |
-///  | `a - b`    | `::compensated_diff(a, b)`  | 2diff(a, b)   | yes    |
-///  | `a * b`    | `::compensated_prod(a, b)`  | 2prod(a, b)   | yes    |
-///  | `a / b`    | `::compensated_ratio(a, b)` |               | no     |
-///  | `a.sqrt()` | `::compensated_sqrt(a, b)`  |               | no     |
-///
-/// For sum and difference, there are `unsafe` versions, which may be faster
-/// because they may assume that the arguments are ordered by magnitude, i.e,
-/// `a.abs() >= b.abs()`. This constraint can be slightly relaxed.[^1]
-///
-///  | (op)    | unsafe method                   | Also known as     | Exact? |
-///  |---------|---------------------------------|-------------------|--------|
-///  | `a + b` | `::compensated_fast_sum(a, b)`  | fast2sum(a, b)    | yes*   |
-///  | `a - b` | `::compensated_fast_diff(a, b)` | fast2diff(a, b)   | yes*   |
+///  | (op)       | method                          | Also known as  | Exact? |
+///  |------------|---------------------------------|----------------|--------|
+///  | `a + b`    | `::compensated_sum(a, b)`       | 2sum(a, b)     | yes    |
+///  | `a - b`    | `::compensated_diff(a, b)`      | 2diff(a, b)    | yes    |
+///  | `a * b`    | `::compensated_prod(a, b)`      | 2prod(a, b)    | yes    |
+///  | `a / b`    | `::compensated_ratio(a, b)`     |                | no     |
+///  | `a.sqrt()` | `::compensated_sqrt(a, b)`      |                | no     |
+///  |            |                                 |                |        |
+///  | `a + b`    | `::compensated_fast_sum(a, b)`  | fast2sum(a, b) | yes*   |
+///  | `a - b`    | `::compensated_fast_diff(a, b)` | fast2diff(a, b)| yes*   |
 ///
 /// **Warning**: Compensated arithmetic is not guaranteed to conform to IEEE
 /// rules when it comes to infinities. One usually gets NaN in this case.
