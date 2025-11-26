@@ -25,7 +25,7 @@ impl<H, L> Compensated<H, L> {
     pub fn hi(self) -> H {
         self.hi
     }
-    
+
     /// Get the low part of the compensated value
     pub fn lo(self) -> L {
         self.lo
@@ -168,8 +168,9 @@ pub trait CompensatedArithmetic<T> : From<T> + Into<T>
     /// condition can be slightly relaxed.). On floating point numbers, this is
     /// known as Kahan summation or "fast2sum".
     ///
-    /// **Safety**: you must make sure that large is indeed the larger number.
-    unsafe fn compensated_fast_sum(large: T, small: T) -> Self {
+    /// **Unchecked precondition**: you must make sure that `large` is indeed
+    /// larger by magnitude than `small`.
+    fn compensated_fast_sum(large: T, small: T) -> Self {
         return Self::compensated_sum(large, small);
     }
 
@@ -180,11 +181,13 @@ pub trait CompensatedArithmetic<T> : From<T> + Into<T>
     /// larger magnitude than `b`. (For double-double arithmetic, this
     /// condition can be slightly relaxed.).
     ///
-    /// **Safety**: you must make sure that large is indeed the larger number.
-    unsafe fn compensated_fast_diff(large: T, small: T) -> Self {
+    /// **Unchecked precondition**: you must make sure that `large` is indeed
+    /// larger by magnitude than `small`.
+    fn compensated_fast_diff(large: T, small: T) -> Self {
         return Self::compensated_diff(large, small);
     }
 }
+
 /// Addition under the assumption of ordered arguments.
 pub trait AddFast<T = Self> : Add<T> {
     /// Add `small` to `self`, assuming `small.abs() <= self.abs()`.
@@ -193,8 +196,9 @@ pub trait AddFast<T = Self> : Add<T> {
     /// smaller in magnitude than `self`. Under some specific circumstances,
     /// this may lead to more efficient code.
     ///
-    /// **Safety**: you must make sure that `small` is indeed the smaller number.
-    unsafe fn add_fast(self, small: T) -> Self::Output;
+    /// **Unchecked precondition**: you must make sure that `self` is indeed
+    /// larger by magnitude than `small`.
+    fn add_fast(self, small: T) -> Self::Output;
 }
 
 /// Subtraction under the assumption of ordered arguments.
@@ -205,10 +209,10 @@ pub trait SubFast<T = Self> : Sub<T>{
     /// smaller in magnitude than `self`. Under some specific circumstances,
     /// this may lead to more efficient code.
     ///
-    /// **Safety**: you must make sure that `small` is indeed the smaller number.
-    unsafe fn sub_fast(self, small: T) -> Self::Output;
+    /// **Unchecked precondition**: you must make sure that `self` is indeed
+    /// larger by magnitude than `small`.
+    fn sub_fast(self, small: T) -> Self::Output;
 }
-
 
 // Public modules
 pub mod arith;

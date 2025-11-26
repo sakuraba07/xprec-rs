@@ -141,12 +141,12 @@ impl CompensatedArithmetic<f64> for Df64 {
     }
 
     #[inline(always)]
-    unsafe fn compensated_fast_sum(a: f64, b: f64) -> Df64 {
+    fn compensated_fast_sum(a: f64, b: f64) -> Df64 {
         return arith::addfast_dd(a, b);
     }
 
     #[inline(always)]
-    unsafe fn compensated_fast_diff(a: f64, b: f64) -> Df64 {
+    fn compensated_fast_diff(a: f64, b: f64) -> Df64 {
         return arith::subfast_dd(a, b);
     }
 
@@ -161,19 +161,19 @@ macro_rules! binary_op_fast
     ($Trait:ident, $func:ident, $op_qq:path, $op_qd:path, $op_dq:path) => {
         // implementation for Df64 (op) Df64
         impl $Trait for Df64 {
-            unsafe fn $func(self, b: Df64) -> Df64 {
+            fn $func(self, b: Df64) -> Df64 {
                 return $op_qq(self, b);
             }
         }
         // implementation for Df64 (op) f64
         impl $Trait<f64> for Df64 {
-            unsafe fn $func(self, b: f64) -> Df64 {
+            fn $func(self, b: f64) -> Df64 {
                 return $op_qd(self, b);
             }
         }
         // implementation for f64 (op) Df64
         impl $Trait<Df64> for f64 {
-            unsafe fn $func(self, b: Df64) -> Df64 {
+            fn $func(self, b: Df64) -> Df64 {
                 return $op_dq(self, b);
             }
         }
