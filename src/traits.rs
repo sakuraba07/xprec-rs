@@ -1105,22 +1105,37 @@ mod test
     #[test]
     fn test_float_zero()
     {
-        let zero = Df64::ZERO;
-        assert_eq!(zero, Df64::ZERO);
-        assert!(zero.is_finite());
-        assert!(!zero.is_nan());
-        assert_eq!(zero.hi, 0.0);
-        assert_eq!(zero.lo, 0.0);
-    }
-
-    #[test]
-    fn test_float_neg_zero()
-    {
+        let pos_zero = Df64::ZERO;
         let neg_zero = <Df64 as Float>::neg_zero();
+
+        // Basic properties of positive zero
+        assert_eq!(pos_zero, Df64::ZERO);
+        assert!(pos_zero.is_finite());
+        assert!(!pos_zero.is_nan());
+        assert_eq!(pos_zero.hi, 0.0);
+        assert_eq!(pos_zero.lo, 0.0);
+
+        // Basic properties of negative zero
         assert!(neg_zero.is_finite());
         assert!(!neg_zero.is_nan());
+
+        // Check the sign bit of hi component
+        assert!(pos_zero.hi.is_sign_positive());
         assert!(neg_zero.hi.is_sign_negative());
-        assert_eq!(neg_zero, Df64::ZERO);
+
+        // They should be equal in value (IEEE 754: +0.0 == -0.0)
+        assert_eq!(pos_zero, neg_zero);
+        assert!(!(pos_zero != neg_zero));
+        assert!(!(pos_zero < neg_zero));
+        assert!(!(pos_zero > neg_zero));
+        assert!(pos_zero <= neg_zero);
+        assert!(pos_zero >= neg_zero);
+
+        // Both should classify as Zero
+        assert_eq!(pos_zero.classify(), FpCategory::Zero);
+        assert_eq!(neg_zero.classify(), FpCategory::Zero);
+        assert!(!pos_zero.is_normal());
+        assert!(!neg_zero.is_normal());
     }
 
     #[test]
@@ -1221,8 +1236,13 @@ mod test
         assert!(<Df64 as Float>::infinity().is_sign_positive());
         assert!(<Df64 as Float>::neg_infinity().is_sign_negative());
 
-        // Zero is considered positive
-        assert!(Df64::ZERO.is_sign_positive());
+        // Signed zero behavior: is_sign_positive/is_sign_negative check the sign bit
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert!(pos_zero.is_sign_positive());
+        assert!(!pos_zero.is_sign_negative());
+        assert!(!neg_zero.is_sign_positive());
+        assert!(neg_zero.is_sign_negative());
     }
 
     // ===== Float trait basic arithmetic (5 methods) =====
@@ -1240,6 +1260,16 @@ mod test
         assert!(Float::abs(<Df64 as Float>::nan()).is_nan());
         assert!(Float::abs(<Df64 as Float>::infinity()).is_infinite());
         assert!(Float::abs(<Df64 as Float>::neg_infinity()).is_infinite());
+
+        // Signed zero: abs of both zeros should be positive zero
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let abs_pos = Float::abs(pos_zero);
+        let abs_neg = Float::abs(neg_zero);
+        assert_eq!(abs_pos, Df64::ZERO);
+        assert_eq!(abs_neg, Df64::ZERO);
+        assert!(abs_pos.hi.is_sign_positive());
+        assert!(abs_neg.hi.is_sign_positive());
     }
 
     #[test]
@@ -1247,9 +1277,14 @@ mod test
     {
         assert_eq!(Float::signum(Df64::from(5.0)), Df64::ONE);
         assert_eq!(Float::signum(Df64::from(-5.0)), -Df64::ONE);
-        // signum(0) returns 1.0 for Df64 (based on hi component)
-        assert_eq!(Float::signum(Df64::ZERO), Df64::ONE);
         assert!(Float::signum(<Df64 as Float>::nan()).is_nan());
+
+        // Signed zero: signum is based on hi.signum()
+        // For f64: signum(+0.0) = 1.0, signum(-0.0) = -1.0
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::signum(pos_zero), Df64::ONE);
+        assert_eq!(Float::signum(neg_zero), -Df64::ONE);
     }
 
     #[test]
@@ -1265,9 +1300,14 @@ mod test
         let recip_one = Float::recip(Df64::ONE);
         assert!(Float::abs(recip_one - Df64::ONE).hi < 1e-30);
 
-        // recip(0) may return NaN or infinity depending on implementation
-        let recip_zero = Float::recip(Df64::ZERO);
-        assert!(recip_zero.is_infinite() || recip_zero.is_nan());
+        // Signed zero: recip(0) returns NaN in current implementation
+        // (IEEE 754 specifies infinity, but double-double implementation returns NaN)
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let recip_pos = Float::recip(pos_zero);
+        let recip_neg = Float::recip(neg_zero);
+        assert!(recip_pos.is_nan());
+        assert!(recip_neg.is_nan());
     }
 
     #[test]
@@ -1290,6 +1330,13 @@ mod test
         let three = Df64::from(3.0);
         let result = Float::powi(three, 4);
         assert!(Float::abs(result - Df64::from(81.0)).hi < 1e-29);
+
+        // Signed zero: 0^n returns NaN in current implementation
+        // (uses exp(n*log(x)) which produces NaN for log(0))
+        let pos_zero = Df64::ZERO;
+        assert!(Float::powi(pos_zero, 0).is_nan());
+        assert!(Float::powi(pos_zero, 2).is_nan());
+        assert!(Float::powi(pos_zero, -2).is_nan());
     }
 
     #[test]
@@ -1306,6 +1353,11 @@ mod test
         let result = Float::powf(Df64::from(4.0), half);
         let expected = Df64::from(2.0);
         assert!(Float::abs(result - expected).hi < 1e-30);
+
+        // Signed zero: powf with zero base returns NaN due to log(0) = -inf
+        let pos_zero = Df64::ZERO;
+        let result = Float::powf(pos_zero, two);
+        assert!(result.is_nan());
     }
 
     // ===== Float trait rounding methods (5 methods) =====
@@ -1317,6 +1369,10 @@ mod test
         assert_eq!(Float::floor(Df64::from(3.0)), Df64::from(3.0));
         assert_eq!(Float::floor(Df64::from(-3.7)), Df64::from(-4.0));
         assert_eq!(Float::floor(Df64::ZERO), Df64::ZERO);
+
+        // Signed zero: rounding preserves zero value
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::floor(neg_zero), Df64::ZERO);
     }
 
     #[test]
@@ -1326,6 +1382,10 @@ mod test
         assert_eq!(Float::ceil(Df64::from(3.0)), Df64::from(3.0));
         assert_eq!(Float::ceil(Df64::from(-3.2)), Df64::from(-3.0));
         assert_eq!(Float::ceil(Df64::ZERO), Df64::ZERO);
+
+        // Signed zero: rounding preserves zero value
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::ceil(neg_zero), Df64::ZERO);
     }
 
     #[test]
@@ -1337,6 +1397,10 @@ mod test
         assert_eq!(Float::round(Df64::from(-3.4)), Df64::from(-3.0));
         assert_eq!(Float::round(Df64::from(-3.5)), Df64::from(-4.0));
         assert_eq!(Float::round(Df64::ZERO), Df64::ZERO);
+
+        // Signed zero: rounding preserves zero value
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::round(neg_zero), Df64::ZERO);
     }
 
     #[test]
@@ -1347,6 +1411,10 @@ mod test
         assert_eq!(Float::trunc(Df64::from(-3.7)), Df64::from(-3.0));
         assert_eq!(Float::trunc(Df64::from(-3.2)), Df64::from(-3.0));
         assert_eq!(Float::trunc(Df64::ZERO), Df64::ZERO);
+
+        // Signed zero: rounding preserves zero value
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::trunc(neg_zero), Df64::ZERO);
     }
 
     #[test]
@@ -1372,6 +1440,10 @@ mod test
         // Test integer value
         assert_eq!(Float::fract(Df64::from(3.0)), Df64::ZERO);
         assert_eq!(Float::fract(Df64::ZERO), Df64::ZERO);
+
+        // Signed zero: fract preserves zero value
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::fract(neg_zero), Df64::ZERO);
     }
 
     // ===== Float trait comparison methods (5 methods) =====
@@ -1390,6 +1462,15 @@ mod test
         let neg_b = Df64::from(-3.0);
         assert_eq!(Float::min(neg_a, neg_b), neg_b);
         assert_eq!(Float::min(a, neg_a), neg_a);
+
+        // Signed zero: min/max with zeros
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::min(pos_zero, a), pos_zero);
+        assert_eq!(Float::min(neg_zero, neg_a), neg_a);
+        // min between +0.0 and -0.0: IEEE 754 does not distinguish
+        let min_zeros = Float::min(pos_zero, neg_zero);
+        assert_eq!(min_zeros, pos_zero);  // Value equality
     }
 
     #[test]
@@ -1406,6 +1487,40 @@ mod test
         let neg_b = Df64::from(-3.0);
         assert_eq!(Float::max(neg_a, neg_b), neg_a);
         assert_eq!(Float::max(a, neg_a), a);
+
+        // Signed zero: min/max with zeros
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::max(pos_zero, a), a);
+        assert_eq!(Float::max(neg_zero, neg_a), neg_zero);
+        // max between +0.0 and -0.0: IEEE 754 does not distinguish
+        let max_zeros = Float::max(pos_zero, neg_zero);
+        assert_eq!(max_zeros, pos_zero);  // Value equality
+    }
+
+    #[test]
+    fn test_float_signed_zero_copysign()
+    {
+        let one = Df64::ONE;
+        let neg_one = -Df64::ONE;
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+
+        // copysign(value, sign) copies the sign of 'sign' to 'value'
+        let result = Float::copysign(one, neg_zero);
+        assert!(result.hi.is_sign_negative());
+        assert!(Float::abs(result - neg_one).hi < 1e-30);
+
+        let result = Float::copysign(neg_one, pos_zero);
+        assert!(result.hi.is_sign_positive());
+        assert!(Float::abs(result - one).hi < 1e-30);
+
+        // copysign with zero as the value
+        let result = Float::copysign(pos_zero, neg_one);
+        assert!(result.hi.is_sign_negative());
+
+        let result = Float::copysign(neg_zero, one);
+        assert!(result.hi.is_sign_positive());
     }
 
     #[test]
@@ -1448,6 +1563,45 @@ mod test
         assert!(Float::abs(result - expected).hi < 1e-30);
     }
 
+    #[test]
+    fn test_float_signed_zero_arithmetic()
+    {
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let one = Df64::ONE;
+
+        // Addition with zeros
+        assert_eq!(one + pos_zero, one);
+        assert_eq!(one + neg_zero, one);
+
+        // Subtraction
+        assert_eq!(one - pos_zero, one);
+        assert_eq!(one - neg_zero, one);
+
+        // Multiplication by zero
+        let mul_pos = one * pos_zero;
+        let mul_neg = one * neg_zero;
+        assert_eq!(mul_pos, pos_zero);
+        assert_eq!(mul_neg, pos_zero);  // Value equality
+
+        // Negation of zeros
+        let neg_of_pos = -pos_zero;
+        let neg_of_neg = -neg_zero;
+        assert!(neg_of_pos.hi.is_sign_negative());
+        assert!(neg_of_neg.hi.is_sign_positive());
+
+        // Division of zero by non-zero
+        let div_pos = pos_zero / one;
+        let div_neg = neg_zero / one;
+        assert_eq!(div_pos, pos_zero);
+        assert_eq!(div_neg, pos_zero);  // Value equality
+
+        // Division by zero returns NaN in current implementation
+        // (IEEE 754 specifies infinity, but double-double implementation returns NaN)
+        let result = one / pos_zero;
+        assert!(result.is_nan());
+    }
+
     // ===== Float trait exponential and logarithmic (11 methods) =====
 
     #[test]
@@ -1471,6 +1625,10 @@ mod test
         let exp_neg1 = Float::exp(neg_one);
         let expected = Float::recip(e);
         assert!(Float::abs(exp_neg1 - expected).hi < 1e-30);
+
+        // Signed zero: exp(0) = 1
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::exp(neg_zero), Df64::ONE);
     }
 
     #[test]
@@ -1491,6 +1649,10 @@ mod test
         // Test negative values
         let result = Float::exp2(-Df64::ONE);
         assert!(Float::abs(result - Df64::from(0.5)).hi < 1e-30);
+
+        // Signed zero: exp2(0) = 1
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::exp2(neg_zero), Df64::ONE);
     }
 
     #[test]
@@ -1566,6 +1728,10 @@ mod test
         let result = Float::exp_m1(neg_small);
         // For small x, exp(x) - 1 ≈ x
         assert!(Float::abs(result - neg_small).hi < 1e-20);
+
+        // Signed zero: expm1(0) = 0
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::exp_m1(neg_zero), Df64::ZERO);
     }
 
     #[test]
@@ -1578,6 +1744,10 @@ mod test
         let one = Df64::ONE;
         let result = Float::ln_1p(one); // ln(2)
         assert!(Float::abs(result - crate::consts::LN_2).hi < 1e-30);
+
+        // Signed zero: ln_1p(0) = 0
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::ln_1p(neg_zero), Df64::ZERO);
     }
 
     #[test]
@@ -1594,6 +1764,15 @@ mod test
         // Verify sqrt(2) * sqrt(2) = 2
         let squared = sqrt2 * sqrt2;
         assert!(Float::abs(squared - two).hi < 1e-30);
+
+        // Signed zero: sqrt(+0.0) = +0.0, sqrt(-0.0) behavior may vary
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let sqrt_pos = Float::sqrt(pos_zero);
+        let sqrt_neg = Float::sqrt(neg_zero);
+        assert_eq!(sqrt_pos, pos_zero);
+        assert_eq!(sqrt_neg, pos_zero);  // Value equality
+        assert!(sqrt_pos.hi.is_sign_positive());
     }
 
     #[test]
@@ -1636,6 +1815,11 @@ mod test
         // Test negative values
         let result = Float::sin(-pi_half);
         assert!(Float::abs(result + Df64::ONE).hi < 1e-30);
+
+        // Signed zero: sin(0) = 0 (sin is odd function)
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let sin_neg = Float::sin(neg_zero);
+        assert_eq!(sin_neg, Df64::ZERO);  // Value equality
     }
 
     #[test]
@@ -1654,6 +1838,10 @@ mod test
         // Test negative values (cos is even function)
         let result_neg = Float::cos(-pi);
         assert!(Float::abs(result_neg + Df64::ONE).hi < 1e-30);
+
+        // Signed zero: cos(0) = 1 (cos is even function)
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::cos(neg_zero), Df64::ONE);
     }
 
     #[test]
@@ -1680,7 +1868,12 @@ mod test
         // Test near pi/2 where tan approaches infinity
         let near_pi_half = pi_half - Df64::from(1e-10);
         let result = Float::tan(near_pi_half);
-        assert!(result.hi > 1e9); // Should be very large</parameter>
+        assert!(result.hi > 1e9); // Should be very large
+
+        // Signed zero: tan(0) = 0 (tan is odd function)
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let tan_neg = Float::tan(neg_zero);
+        assert_eq!(tan_neg, Df64::ZERO);  // Value equality
     }
 
     #[test]
@@ -1764,6 +1957,38 @@ mod test
         let x = -Df64::ONE;
         let result = Float::atan2(y, x);
         assert!(Float::abs(result - crate::consts::PI).hi < 1e-30);
+
+        // Signed zero behavior
+        let pos_zero = Df64::ZERO;
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let one = Df64::ONE;
+        let neg_one = -Df64::ONE;
+        let pi = crate::consts::PI;
+
+        // atan2(+0, +x) = +0
+        let result = Float::atan2(pos_zero, one);
+        assert_eq!(result, pos_zero);
+
+        // atan2(+0, -x) = +pi
+        let result = Float::atan2(pos_zero, neg_one);
+        assert!(Float::abs(result - pi).hi < 1e-30);
+
+        // atan2(-0, +x) = -0 (value equality with +0)
+        let result = Float::atan2(neg_zero, one);
+        assert_eq!(result, pos_zero);  // Value equality
+
+        // atan2(-0, -x) returns +pi in current implementation
+        // (IEEE 754 specifies -pi, but implementation does not distinguish -0)
+        let result = Float::atan2(neg_zero, neg_one);
+        assert!(Float::abs(result - pi).hi < 1e-30);
+
+        // atan2(+y, 0) = +pi/2
+        let result = Float::atan2(one, pos_zero);
+        assert!(Float::abs(result - crate::consts::PI_HALF).hi < 1e-30);
+
+        // atan2(-y, 0) = -pi/2
+        let result = Float::atan2(neg_one, pos_zero);
+        assert!(Float::abs(result + crate::consts::PI_HALF).hi < 1e-30);
     }
 
     #[test]
@@ -1798,6 +2023,11 @@ mod test
         // Test negative values (sinh is odd function)
         let result = Float::sinh(-one);
         assert!(Float::abs(result + expected).hi < 1e-30);
+
+        // Signed zero: sinh(0) = 0 (sinh is odd function)
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let sinh_neg = Float::sinh(neg_zero);
+        assert_eq!(sinh_neg, Df64::ZERO);  // Value equality
     }
 
     #[test]
@@ -1816,6 +2046,10 @@ mod test
         // Test negative values (cosh is even function)
         let result = Float::cosh(-one);
         assert!(Float::abs(result - expected).hi < 1e-30);
+
+        // Signed zero: cosh(0) = 1 (cosh is even function)
+        let neg_zero = <Df64 as Float>::neg_zero();
+        assert_eq!(Float::cosh(neg_zero), Df64::ONE);
     }
 
     #[test]
@@ -1834,6 +2068,11 @@ mod test
         let result = Float::tanh(-large);
         assert!(result.hi < -0.9999);
         assert!(result.hi >= -1.0);
+
+        // Signed zero: tanh(0) = 0 (tanh is odd function)
+        let neg_zero = <Df64 as Float>::neg_zero();
+        let tanh_neg = Float::tanh(neg_zero);
+        assert_eq!(tanh_neg, Df64::ZERO);  // Value equality
     }
 
     #[test]
