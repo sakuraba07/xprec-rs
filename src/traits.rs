@@ -436,7 +436,12 @@ impl num_traits::Float for Df64 {
 
     #[inline(always)]
     fn abs_sub(self, other: Self) -> Self {
-        funcs::abs(arith::sub_qq(self, other))
+        let diff = arith::sub_qq(self, other);
+        if diff.hi < 0.0 {
+            Df64::ZERO
+        } else {
+            diff
+        }
     }
 
     #[inline(always)]
@@ -1408,15 +1413,19 @@ mod test
     {
         let a = Df64::from(5.0);
         let b = Df64::from(3.0);
+        // abs_sub(a, b) = max(a - b, 0) = max(2, 0) = 2
         assert_eq!(Float::abs_sub(a, b), Df64::from(2.0));
-        // abs_sub(b, a) returns abs(b - a) = 2.0, not 0
-        assert_eq!(Float::abs_sub(b, a), Df64::from(2.0));
-        // abs_sub(a, a) = abs(0) = 0
+        // abs_sub(b, a) = max(b - a, 0) = max(-2, 0) = 0
+        assert_eq!(Float::abs_sub(b, a), Df64::ZERO);
+        // abs_sub(a, a) = max(0, 0) = 0
         assert_eq!(Float::abs_sub(a, a), Df64::ZERO);
 
         // Test with negative values
         let neg_a = Df64::from(-5.0);
-        assert_eq!(Float::abs_sub(neg_a, b), Df64::from(8.0));
+        // abs_sub(neg_a, b) = max(-5 - 3, 0) = max(-8, 0) = 0
+        assert_eq!(Float::abs_sub(neg_a, b), Df64::ZERO);
+        // abs_sub(b, neg_a) = max(3 - (-5), 0) = max(8, 0) = 8
+        assert_eq!(Float::abs_sub(b, neg_a), Df64::from(8.0));
     }
 
     #[test]
