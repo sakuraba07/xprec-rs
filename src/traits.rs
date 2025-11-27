@@ -1056,6 +1056,7 @@ impl RealField for Df64 {
 mod test
 {
     use super::*;
+    use approx::assert_ulps_eq;
     use num_traits::Float;
     use std::num::FpCategory;
 
@@ -1286,11 +1287,11 @@ mod test
         let half = Df64::from(0.5);
 
         let result = Float::recip(two);
-        assert!(Float::abs(result - half).hi < 1e-30);
+        assert_ulps_eq!(result, half);
 
         // Test recip(1) is close to 1
         let recip_one = Float::recip(Df64::ONE);
-        assert!(Float::abs(recip_one - Df64::ONE).hi < 1e-30);
+        assert_ulps_eq!(recip_one, Df64::ONE);
 
         // Signed zero: recip(0) returns NaN in current implementation
         // (IEEE 754 specifies infinity, but double-double implementation returns NaN)
@@ -1305,23 +1306,15 @@ mod test
     #[test]
     fn test_float_powi()
     {
+        // Delegate to exp::powi, detailed precision tests are in exp.rs
+        // Here we verify the Float trait correctly delegates
         let two = Df64::from(2.0);
         assert_eq!(Float::powi(two, 0), Df64::ONE);
-        // Allow small precision differences in powi results
-        let result = Float::powi(two, 1);
-        assert!(Float::abs(result - two).hi < 1e-30);
-        let result = Float::powi(two, 2);
-        assert!(Float::abs(result - Df64::from(4.0)).hi < 1e-30);
-        let result = Float::powi(two, 3);
-        assert!(Float::abs(result - Df64::from(8.0)).hi < 1e-30);
-
-        // powi with negative exponent may have small precision differences
-        let result_neg = Float::powi(two, -1);
-        assert!(Float::abs(result_neg - Df64::from(0.5)).hi < 1e-30);
-
-        let three = Df64::from(3.0);
-        let result = Float::powi(three, 4);
-        assert!(Float::abs(result - Df64::from(81.0)).hi < 1e-29);
+        assert_ulps_eq!(Float::powi(two, 1), two);
+        assert_ulps_eq!(Float::powi(two, 2), Df64::from(4.0));
+        assert_ulps_eq!(Float::powi(two, 3), Df64::from(8.0));
+        assert_ulps_eq!(Float::powi(two, -1), Df64::from(0.5));
+        assert_ulps_eq!(Float::powi(Df64::from(3.0), 4), Df64::from(81.0));
 
         // Signed zero: 0^n returns NaN in current implementation
         // (uses exp(n*log(x)) which produces NaN for log(0))
@@ -1334,17 +1327,12 @@ mod test
     #[test]
     fn test_float_powf()
     {
+        // Delegate to exp::powf, detailed precision tests are in exp.rs
         let two = Df64::from(2.0);
         let three = Df64::from(3.0);
 
-        let result = Float::powf(two, three);
-        let expected = Df64::from(8.0);
-        assert!(Float::abs(result - expected).hi < 1e-30);
-
-        let half = Df64::from(0.5);
-        let result = Float::powf(Df64::from(4.0), half);
-        let expected = Df64::from(2.0);
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        assert_ulps_eq!(Float::powf(two, three), Df64::from(8.0));
+        assert_ulps_eq!(Float::powf(Df64::from(4.0), Df64::from(0.5)), Df64::from(2.0));
 
         // Signed zero: powf with zero base returns NaN due to log(0) = -inf
         let pos_zero = Df64::ZERO;
@@ -1501,11 +1489,11 @@ mod test
         // copysign(value, sign) copies the sign of 'sign' to 'value'
         let result = Float::copysign(one, neg_zero);
         assert!(result.hi.is_sign_negative());
-        assert!(Float::abs(result - neg_one).hi < 1e-30);
+        assert_ulps_eq!(result, neg_one);
 
         let result = Float::copysign(neg_one, pos_zero);
         assert!(result.hi.is_sign_positive());
-        assert!(Float::abs(result - one).hi < 1e-30);
+        assert_ulps_eq!(result, one);
 
         // copysign with zero as the value
         let result = Float::copysign(pos_zero, neg_one);
@@ -1552,7 +1540,7 @@ mod test
         let z = Df64::from(1.0);
         let result = Float::mul_add(x, y, z);
         let expected = Df64::from(4.75); // 1.5 * 2.5 + 1.0
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        assert_ulps_eq!(result, expected);
     }
 
     #[test]
@@ -1599,172 +1587,113 @@ mod test
     #[test]
     fn test_float_exp()
     {
-        let e = crate::consts::EULER_E;
-        let exp1 = Float::exp(Df64::ONE);
-        assert!(Float::abs(exp1 - e).hi < 1e-30);
+        // Delegate to exp::exp, detailed precision tests are in exp.rs
+        // Here we verify the Float trait correctly delegates
+        assert_eq!(Float::exp(Df64::ZERO), Df64::ONE);
+        assert_ulps_eq!(Float::exp(Df64::ONE), crate::consts::EULER_E);
 
-        let zero = Df64::ZERO;
-        assert_eq!(Float::exp(zero), Df64::ONE);
-
-        let two = Df64::from(2.0);
-        let exp2 = Float::exp(two);
-        // e^2 = exp(1)^2 - test consistency rather than absolute value
-        let e_squared = Float::powi(e, 2);
-        assert!(Float::abs(exp2 - e_squared).hi < 1e-30);
-
-        // Test negative values
-        let neg_one = -Df64::ONE;
-        let exp_neg1 = Float::exp(neg_one);
-        let expected = Float::recip(e);
-        assert!(Float::abs(exp_neg1 - expected).hi < 1e-30);
-
-        // Signed zero: exp(0) = 1
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(Float::exp(neg_zero), Df64::ONE);
+        // Edge cases
+        assert_eq!(Float::exp(<Df64 as Float>::neg_zero()), Df64::ONE);
     }
 
     #[test]
     fn test_float_exp2()
     {
+        // Delegate to exp::exp2, detailed precision tests are in exp.rs
         assert_eq!(Float::exp2(Df64::ZERO), Df64::ONE);
-        // exp2 may have small precision differences
-        let result = Float::exp2(Df64::ONE);
-        assert!(Float::abs(result - Df64::from(2.0)).hi < 1e-30);
-        let result = Float::exp2(Df64::from(2.0));
-        assert!(Float::abs(result - Df64::from(4.0)).hi < 1e-30);
-        let result = Float::exp2(Df64::from(3.0));
-        assert!(Float::abs(result - Df64::from(8.0)).hi < 1e-30);
-
-        let result = Float::exp2(Df64::from(10.0));
-        assert!(Float::abs(result - Df64::from(1024.0)).hi < 1e-28);
-
-        // Test negative values
-        let result = Float::exp2(-Df64::ONE);
-        assert!(Float::abs(result - Df64::from(0.5)).hi < 1e-30);
+        assert_ulps_eq!(Float::exp2(Df64::ONE), Df64::from(2.0));
+        assert_ulps_eq!(Float::exp2(Df64::from(2.0)), Df64::from(4.0));
+        assert_ulps_eq!(Float::exp2(Df64::from(3.0)), Df64::from(8.0));
+        assert_ulps_eq!(Float::exp2(Df64::from(10.0)), Df64::from(1024.0));
+        assert_ulps_eq!(Float::exp2(-Df64::ONE), Df64::from(0.5));
 
         // Signed zero: exp2(0) = 1
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(Float::exp2(neg_zero), Df64::ONE);
+        assert_eq!(Float::exp2(<Df64 as Float>::neg_zero()), Df64::ONE);
     }
 
     #[test]
     fn test_float_ln()
     {
-        let e = crate::consts::EULER_E;
-        let ln_e = Float::ln(e);
-        assert!(Float::abs(ln_e - Df64::ONE).hi < 1e-30);
-
+        // Delegate to exp::log, detailed precision tests are in exp.rs
         assert_eq!(Float::ln(Df64::ONE), Df64::ZERO);
-
-        let two = Df64::from(2.0);
-        let ln2 = Float::ln(two);
-        assert!(Float::abs(ln2 - crate::consts::LN_2).hi < 1e-30);
+        assert_ulps_eq!(Float::ln(crate::consts::EULER_E), Df64::ONE);
+        assert_ulps_eq!(Float::ln(Df64::from(2.0)), crate::consts::LN_2);
     }
 
     #[test]
     fn test_float_log()
     {
-        let base = Df64::from(10.0);
-        let hundred = Df64::from(100.0);
-        let log = Float::log(hundred, base);
-        assert!(Float::abs(log - Df64::from(2.0)).hi < 1e-30);
-
-        let base = Df64::from(2.0);
-        let eight = Df64::from(8.0);
-        let log = Float::log(eight, base);
-        assert!(Float::abs(log - Df64::from(3.0)).hi < 1e-30);
+        // Delegate to exp::log_base, detailed precision tests are in exp.rs
+        assert_ulps_eq!(Float::log(Df64::from(100.0), Df64::from(10.0)), Df64::from(2.0));
+        assert_ulps_eq!(Float::log(Df64::from(8.0), Df64::from(2.0)), Df64::from(3.0));
     }
 
     #[test]
     fn test_float_log2()
     {
+        // Delegate to exp::log2, detailed precision tests are in exp.rs
         assert_eq!(Float::log2(Df64::ONE), Df64::ZERO);
         assert_eq!(Float::log2(Df64::from(2.0)), Df64::ONE);
-
-        let result = Float::log2(Df64::from(8.0));
-        assert!(Float::abs(result - Df64::from(3.0)).hi < 1e-30);
-
-        let result = Float::log2(Df64::from(1024.0));
-        assert!(Float::abs(result - Df64::from(10.0)).hi < 1e-30);
+        assert_ulps_eq!(Float::log2(Df64::from(8.0)), Df64::from(3.0));
+        assert_ulps_eq!(Float::log2(Df64::from(1024.0)), Df64::from(10.0));
     }
 
     #[test]
     fn test_float_log10()
     {
+        // Delegate to exp::log10, detailed precision tests are in exp.rs
         assert_eq!(Float::log10(Df64::ONE), Df64::ZERO);
-
-        let result = Float::log10(Df64::from(10.0));
-        assert!(Float::abs(result - Df64::ONE).hi < 1e-30);
-
-        let result = Float::log10(Df64::from(100.0));
-        assert!(Float::abs(result - Df64::from(2.0)).hi < 1e-30);
-
-        let result = Float::log10(Df64::from(1000.0));
-        assert!(Float::abs(result - Df64::from(3.0)).hi < 1e-30);
+        assert_ulps_eq!(Float::log10(Df64::from(10.0)), Df64::ONE);
+        assert_ulps_eq!(Float::log10(Df64::from(100.0)), Df64::from(2.0));
+        assert_ulps_eq!(Float::log10(Df64::from(1000.0)), Df64::from(3.0));
     }
 
     #[test]
     fn test_float_exp_m1()
     {
+        // Delegate to exp::expm1, detailed precision tests are in exp.rs
         // exp_m1(x) = exp(x) - 1
-        let zero = Df64::ZERO;
-        assert_eq!(Float::exp_m1(zero), zero);
+        assert_eq!(Float::exp_m1(Df64::ZERO), Df64::ZERO);
 
-        let small = Df64::from(1e-10);
-        let result = Float::exp_m1(small);
-        // For small x, exp(x) - 1 ≈ x
-        assert!(Float::abs(result - small).hi < 1e-20);
-
-        // Test negative values
-        let neg_small = Df64::from(-1e-10);
-        let result = Float::exp_m1(neg_small);
-        // For small x, exp(x) - 1 ≈ x
-        assert!(Float::abs(result - neg_small).hi < 1e-20);
+        // exp_m1(1) = e - 1
+        let expected = crate::consts::EULER_E - Df64::ONE;
+        assert_ulps_eq!(Float::exp_m1(Df64::ONE), expected);
 
         // Signed zero: expm1(0) = 0
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(Float::exp_m1(neg_zero), Df64::ZERO);
+        assert_eq!(Float::exp_m1(<Df64 as Float>::neg_zero()), Df64::ZERO);
     }
 
     #[test]
     fn test_float_ln_1p()
     {
+        // Delegate to exp::log1p, detailed precision tests are in exp.rs
         // ln_1p(x) = ln(1 + x)
-        let zero = Df64::ZERO;
-        assert_eq!(Float::ln_1p(zero), zero);
-
-        let one = Df64::ONE;
-        let result = Float::ln_1p(one); // ln(2)
-        assert!(Float::abs(result - crate::consts::LN_2).hi < 1e-30);
+        assert_eq!(Float::ln_1p(Df64::ZERO), Df64::ZERO);
+        assert_ulps_eq!(Float::ln_1p(Df64::ONE), crate::consts::LN_2); // ln(2)
 
         // Signed zero: ln_1p(0) = 0
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(Float::ln_1p(neg_zero), Df64::ZERO);
+        assert_eq!(Float::ln_1p(<Df64 as Float>::neg_zero()), Df64::ZERO);
     }
 
     #[test]
     fn test_float_sqrt()
     {
+        // Delegate to arith::sqrt_q, detailed precision tests are in arith.rs
         assert_eq!(Float::sqrt(Df64::ZERO), Df64::ZERO);
         assert_eq!(Float::sqrt(Df64::ONE), Df64::ONE);
+        assert_eq!(Float::sqrt(Df64::from(4.0)), Df64::from(2.0));
 
-        let four = Df64::from(4.0);
-        assert_eq!(Float::sqrt(four), Df64::from(2.0));
-
+        // Verify sqrt(2) * sqrt(2) = 2 using high-precision check
         let two = Df64::from(2.0);
         let sqrt2 = Float::sqrt(two);
-        // Verify sqrt(2) * sqrt(2) = 2
-        let squared = sqrt2 * sqrt2;
-        assert!(Float::abs(squared - two).hi < 1e-30);
+        assert_ulps_eq!(sqrt2 * sqrt2, two);
 
-        // Signed zero: sqrt(+0.0) = +0.0, sqrt(-0.0) behavior may vary
+        // Signed zero: sqrt(+0.0) = +0.0
         let pos_zero = Df64::ZERO;
         let neg_zero = <Df64 as Float>::neg_zero();
-        let sqrt_pos = Float::sqrt(pos_zero);
-        let sqrt_neg = Float::sqrt(neg_zero);
-        assert_eq!(sqrt_pos, pos_zero);
-        assert_eq!(sqrt_neg, pos_zero);  // Value equality
-        assert!(sqrt_pos.hi.is_sign_positive());
+        assert_eq!(Float::sqrt(pos_zero), pos_zero);
+        assert_eq!(Float::sqrt(neg_zero), pos_zero);  // Value equality
+        assert!(Float::sqrt(pos_zero).hi.is_sign_positive());
     }
 
     #[test]
@@ -1778,15 +1707,10 @@ mod test
     #[test]
     fn test_float_hypot()
     {
-        let three = Df64::from(3.0);
-        let four = Df64::from(4.0);
-        let result = Float::hypot(three, four);
-        assert_eq!(result, Df64::from(5.0)); // 3-4-5 triangle
-
-        let zero = Df64::ZERO;
-        let five = Df64::from(5.0);
-        assert_eq!(Float::hypot(zero, five), five);
-        assert_eq!(Float::hypot(five, zero), five);
+        // Delegate to roots::hypot, detailed precision tests are in roots.rs
+        assert_ulps_eq!(Float::hypot(Df64::from(3.0), Df64::from(4.0)), Df64::from(5.0)); // 3-4-5 triangle
+        assert_eq!(Float::hypot(Df64::ZERO, Df64::from(5.0)), Df64::from(5.0));
+        assert_eq!(Float::hypot(Df64::from(5.0), Df64::ZERO), Df64::from(5.0));
     }
 
     // ===== Float trait trigonometric functions (7 methods) =====
@@ -1794,161 +1718,90 @@ mod test
     #[test]
     fn test_float_sin()
     {
+        // Delegate to circular::sin, detailed precision tests are in circular.rs
         assert_eq!(Float::sin(Df64::ZERO), Df64::ZERO);
+        assert_ulps_eq!(Float::sin(crate::consts::PI_HALF), Df64::ONE);
+        assert_ulps_eq!(Float::sin(-crate::consts::PI_HALF), -Df64::ONE);
 
-        let pi_half = crate::consts::PI_HALF;
-        let result = Float::sin(pi_half);
-        assert!(Float::abs(result - Df64::ONE).hi < 1e-30);
-
-        let pi = crate::consts::PI;
-        let result = Float::sin(pi);
-        assert!(Float::abs(result).hi < 1e-30);
-
-        // Test negative values
-        let result = Float::sin(-pi_half);
-        assert!(Float::abs(result + Df64::ONE).hi < 1e-30);
+        // sin(π) should be very close to 0 (within a few ulps of π)
+        let sin_pi = Float::sin(crate::consts::PI);
+        assert!(Float::abs(sin_pi).hi < Df64::EPSILON.hi * 4.0);
 
         // Signed zero: sin(0) = 0 (sin is odd function)
-        let neg_zero = <Df64 as Float>::neg_zero();
-        let sin_neg = Float::sin(neg_zero);
-        assert_eq!(sin_neg, Df64::ZERO);  // Value equality
+        assert_eq!(Float::sin(<Df64 as Float>::neg_zero()), Df64::ZERO);
     }
 
     #[test]
     fn test_float_cos()
     {
+        // Delegate to circular::cos, detailed precision tests are in circular.rs
         assert_eq!(Float::cos(Df64::ZERO), Df64::ONE);
+        assert_ulps_eq!(Float::cos(crate::consts::PI), -Df64::ONE);
 
-        let pi = crate::consts::PI;
-        let result = Float::cos(pi);
-        assert!(Float::abs(result + Df64::ONE).hi < 1e-30);
-
-        let pi_half = crate::consts::PI_HALF;
-        let result = Float::cos(pi_half);
-        assert!(Float::abs(result).hi < 1e-30);
-
-        // Test negative values (cos is even function)
-        let result_neg = Float::cos(-pi);
-        assert!(Float::abs(result_neg + Df64::ONE).hi < 1e-30);
+        // cos(π/2) should be very close to 0 (within a few ulps of π/2)
+        let cos_pi_half = Float::cos(crate::consts::PI_HALF);
+        assert!(Float::abs(cos_pi_half).hi < Df64::EPSILON.hi * 4.0);
 
         // Signed zero: cos(0) = 1 (cos is even function)
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(Float::cos(neg_zero), Df64::ONE);
+        assert_eq!(Float::cos(<Df64 as Float>::neg_zero()), Df64::ONE);
     }
 
     #[test]
     fn test_float_tan()
     {
+        // Delegate to circular::tan, detailed precision tests are in circular.rs
         assert_eq!(Float::tan(Df64::ZERO), Df64::ZERO);
-
-        let pi_four = crate::consts::PI_FOURTH;
-        let result = Float::tan(pi_four);
-        assert!(Float::abs(result - Df64::ONE).hi < 1e-30);
-
-        // Test negative values (tan is odd function)
-        let result = Float::tan(-pi_four);
-        assert!(Float::abs(result + Df64::ONE).hi < 1e-30);
+        assert_ulps_eq!(Float::tan(crate::consts::PI_FOURTH), Df64::ONE);
+        assert_ulps_eq!(Float::tan(-crate::consts::PI_FOURTH), -Df64::ONE);
 
         // Test at pi/2 where tan has very large magnitude
-        // Note: Due to the high precision of Df64's PI_HALF, tan(π/2) may not be
-        // exactly infinite but should have extremely large magnitude
-        let pi_half = crate::consts::PI_HALF;
-        let result = Float::tan(pi_half);
-        // Check that |tan(π/2)| is extremely large (> 1e15)
+        let result = Float::tan(crate::consts::PI_HALF);
         assert!(Float::abs(result).hi > 1e15);
 
-        // Test near pi/2 where tan approaches infinity
-        let near_pi_half = pi_half - Df64::from(1e-10);
-        let result = Float::tan(near_pi_half);
-        assert!(result.hi > 1e9); // Should be very large
-
         // Signed zero: tan(0) = 0 (tan is odd function)
-        let neg_zero = <Df64 as Float>::neg_zero();
-        let tan_neg = Float::tan(neg_zero);
-        assert_eq!(tan_neg, Df64::ZERO);  // Value equality
+        assert_eq!(Float::tan(<Df64 as Float>::neg_zero()), Df64::ZERO);
     }
 
     #[test]
     fn test_float_asin()
     {
+        // Delegate to circular::asin, detailed precision tests are in circular.rs
         assert_eq!(Float::asin(Df64::ZERO), Df64::ZERO);
-
-        let one = Df64::ONE;
-        let result = Float::asin(one);
-        assert!(Float::abs(result - crate::consts::PI_HALF).hi < 1e-30);
-
-        let half = Df64::from(0.5);
-        let result = Float::asin(half);
-        let expected = crate::consts::PI_SIXTH;
-        assert!(Float::abs(result - expected).hi < 1e-30);
-
-        // Test negative values (asin is odd function)
-        let result = Float::asin(-one);
-        assert!(Float::abs(result + crate::consts::PI_HALF).hi < 1e-30);
+        assert_ulps_eq!(Float::asin(Df64::ONE), crate::consts::PI_HALF);
+        assert_ulps_eq!(Float::asin(-Df64::ONE), -crate::consts::PI_HALF);
+        assert_ulps_eq!(Float::asin(Df64::from(0.5)), crate::consts::PI_SIXTH);
     }
 
     #[test]
     fn test_float_acos()
     {
-        let one = Df64::ONE;
-        assert_eq!(Float::acos(one), Df64::ZERO);
-
-        let zero = Df64::ZERO;
-        let result = Float::acos(zero);
-        let expected = crate::consts::PI_HALF;
-        assert!(Float::abs(result - expected).hi < 1e-30);
-
-        let half = Df64::from(0.5);
-        let result = Float::acos(half);
-        let expected = crate::consts::PI_THIRD;
-        assert!(Float::abs(result - expected).hi < 1e-30);
-
-        // Test negative values
-        let result = Float::acos(-one);
-        let expected = crate::consts::PI;
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        // Delegate to circular::acos, detailed precision tests are in circular.rs
+        assert_eq!(Float::acos(Df64::ONE), Df64::ZERO);
+        assert_ulps_eq!(Float::acos(Df64::ZERO), crate::consts::PI_HALF);
+        assert_ulps_eq!(Float::acos(Df64::from(0.5)), crate::consts::PI_THIRD);
+        assert_ulps_eq!(Float::acos(-Df64::ONE), crate::consts::PI);
     }
 
     #[test]
     fn test_float_atan()
     {
+        // Delegate to circular::atan, detailed precision tests are in circular.rs
         assert_eq!(Float::atan(Df64::ZERO), Df64::ZERO);
-
-        let one = Df64::ONE;
-        let result = Float::atan(one);
-        assert!(Float::abs(result - crate::consts::PI_FOURTH).hi < 1e-30);
-
-        // Test negative values (atan is odd function)
-        let result = Float::atan(-one);
-        assert!(Float::abs(result + crate::consts::PI_FOURTH).hi < 1e-30);
+        assert_ulps_eq!(Float::atan(Df64::ONE), crate::consts::PI_FOURTH);
+        assert_ulps_eq!(Float::atan(-Df64::ONE), -crate::consts::PI_FOURTH);
 
         // Test infinity input
-        let result = Float::atan(Df64::INFINITY);
-        let expected = crate::consts::PI_HALF;
-        assert!(Float::abs(result - expected).hi < 1e-30);
-
-        let result = Float::atan(Df64::NEG_INFINITY);
-        let expected = -crate::consts::PI_HALF;
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        assert_ulps_eq!(Float::atan(Df64::INFINITY), crate::consts::PI_HALF);
+        assert_ulps_eq!(Float::atan(Df64::NEG_INFINITY), -crate::consts::PI_HALF);
     }
 
     #[test]
     fn test_float_atan2()
     {
-        let y = Df64::ONE;
-        let x = Df64::ONE;
-        let result = Float::atan2(y, x);
-        assert!(Float::abs(result - crate::consts::PI_FOURTH).hi < 1e-30);
-
-        let y = Df64::ONE;
-        let x = Df64::ZERO;
-        let result = Float::atan2(y, x);
-        assert!(Float::abs(result - crate::consts::PI_HALF).hi < 1e-30);
-
-        let y = Df64::ZERO;
-        let x = -Df64::ONE;
-        let result = Float::atan2(y, x);
-        assert!(Float::abs(result - crate::consts::PI).hi < 1e-30);
+        // Delegate to circular::atan2, detailed precision tests are in circular.rs
+        assert_ulps_eq!(Float::atan2(Df64::ONE, Df64::ONE), crate::consts::PI_FOURTH);
+        assert_ulps_eq!(Float::atan2(Df64::ONE, Df64::ZERO), crate::consts::PI_HALF);
+        assert_ulps_eq!(Float::atan2(Df64::ZERO, -Df64::ONE), crate::consts::PI);
 
         // Signed zero behavior
         let pos_zero = Df64::ZERO;
@@ -1963,7 +1816,7 @@ mod test
 
         // atan2(+0, -x) = +pi
         let result = Float::atan2(pos_zero, neg_one);
-        assert!(Float::abs(result - pi).hi < 1e-30);
+        assert_ulps_eq!(result, pi);
 
         // atan2(-0, +x) = -0 (value equality with +0)
         let result = Float::atan2(neg_zero, one);
@@ -1972,30 +1825,30 @@ mod test
         // atan2(-0, -x) returns +pi in current implementation
         // (IEEE 754 specifies -pi, but implementation does not distinguish -0)
         let result = Float::atan2(neg_zero, neg_one);
-        assert!(Float::abs(result - pi).hi < 1e-30);
+        assert_ulps_eq!(result, pi);
 
         // atan2(+y, 0) = +pi/2
         let result = Float::atan2(one, pos_zero);
-        assert!(Float::abs(result - crate::consts::PI_HALF).hi < 1e-30);
+        assert_ulps_eq!(result, crate::consts::PI_HALF);
 
         // atan2(-y, 0) = -pi/2
         let result = Float::atan2(neg_one, pos_zero);
-        assert!(Float::abs(result + crate::consts::PI_HALF).hi < 1e-30);
+        assert_ulps_eq!(result, -crate::consts::PI_HALF);
     }
 
     #[test]
     fn test_float_sin_cos()
     {
-        let zero = Df64::ZERO;
-        let (s, c) = Float::sin_cos(zero);
+        // Delegate to circular::sincos, detailed precision tests are in circular.rs
+        let (s, c) = Float::sin_cos(Df64::ZERO);
         assert_eq!(s, Df64::ZERO);
         assert_eq!(c, Df64::ONE);
 
         let pi_four = crate::consts::PI_FOURTH;
         let (s, c) = Float::sin_cos(pi_four);
         let sqrt2_over_2 = Float::recip(Float::sqrt(Df64::from(2.0)));
-        assert!(Float::abs(s - sqrt2_over_2).hi < 1e-30);
-        assert!(Float::abs(c - sqrt2_over_2).hi < 1e-30);
+        assert_ulps_eq!(s, sqrt2_over_2);
+        assert_ulps_eq!(c, sqrt2_over_2);
     }
 
     // ===== Float trait hyperbolic functions (6 methods) =====
@@ -2003,118 +1856,90 @@ mod test
     #[test]
     fn test_float_sinh()
     {
+        // Delegate to hyperbolic::sinh, detailed precision tests are in hyperbolic.rs
         assert_eq!(Float::sinh(Df64::ZERO), Df64::ZERO);
 
-        let one = Df64::ONE;
-        let result = Float::sinh(one);
-        // sinh(1) = (e - 1/e) / 2 ≈ 1.175201...
-        let e_recip = Float::recip(crate::consts::EULER_E);
-        let expected = (crate::consts::EULER_E - e_recip) / Df64::from(2.0);
-        assert!(Float::abs(result - expected).hi < 1e-30);
-
-        // Test negative values (sinh is odd function)
-        let result = Float::sinh(-one);
-        assert!(Float::abs(result + expected).hi < 1e-30);
+        // sinh(1) = (e - 1/e) / 2
+        let e = crate::consts::EULER_E;
+        let expected = (e - Float::recip(e)) / Df64::from(2.0);
+        assert_ulps_eq!(Float::sinh(Df64::ONE), expected);
 
         // Signed zero: sinh(0) = 0 (sinh is odd function)
-        let neg_zero = <Df64 as Float>::neg_zero();
-        let sinh_neg = Float::sinh(neg_zero);
-        assert_eq!(sinh_neg, Df64::ZERO);  // Value equality
+        assert_eq!(Float::sinh(<Df64 as Float>::neg_zero()), Df64::ZERO);
     }
 
     #[test]
     fn test_float_cosh()
     {
-        let zero = Df64::ZERO;
-        assert_eq!(Float::cosh(zero), Df64::ONE);
+        // Delegate to hyperbolic::cosh, detailed precision tests are in hyperbolic.rs
+        assert_eq!(Float::cosh(Df64::ZERO), Df64::ONE);
 
-        let one = Df64::ONE;
-        let result = Float::cosh(one);
-        // cosh(1) = (e + 1/e) / 2 ≈ 1.543080...
-        let e_recip = Float::recip(crate::consts::EULER_E);
-        let expected = (crate::consts::EULER_E + e_recip) / Df64::from(2.0);
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        // cosh(1) = (e + 1/e) / 2
+        let e = crate::consts::EULER_E;
+        let expected = (e + Float::recip(e)) / Df64::from(2.0);
+        assert_ulps_eq!(Float::cosh(Df64::ONE), expected);
 
-        // Test negative values (cosh is even function)
-        let result = Float::cosh(-one);
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        // cosh is even function
+        assert_ulps_eq!(Float::cosh(-Df64::ONE), expected);
 
         // Signed zero: cosh(0) = 1 (cosh is even function)
-        let neg_zero = <Df64 as Float>::neg_zero();
-        assert_eq!(Float::cosh(neg_zero), Df64::ONE);
+        assert_eq!(Float::cosh(<Df64 as Float>::neg_zero()), Df64::ONE);
     }
 
     #[test]
     fn test_float_tanh()
     {
+        // Delegate to hyperbolic::tanh, detailed precision tests are in hyperbolic.rs
         assert_eq!(Float::tanh(Df64::ZERO), Df64::ZERO);
 
         // tanh approaches ±1 for large |x|
         let large = Df64::from(10.0);
-        let result = Float::tanh(large);
-        // tanh(10) should be very close to 1, but allow reasonable tolerance
-        assert!(result.hi > 0.9999);
-        assert!(result.hi <= 1.0);
-
-        // Test negative values (tanh is odd function)
-        let result = Float::tanh(-large);
-        assert!(result.hi < -0.9999);
-        assert!(result.hi >= -1.0);
+        assert!(Float::tanh(large).hi > 0.9999);
+        assert!(Float::tanh(-large).hi < -0.9999);
 
         // Signed zero: tanh(0) = 0 (tanh is odd function)
-        let neg_zero = <Df64 as Float>::neg_zero();
-        let tanh_neg = Float::tanh(neg_zero);
-        assert_eq!(tanh_neg, Df64::ZERO);  // Value equality
+        assert_eq!(Float::tanh(<Df64 as Float>::neg_zero()), Df64::ZERO);
     }
 
     #[test]
     fn test_float_asinh()
     {
+        // Delegate to hyperbolic::asinh, detailed precision tests are in hyperbolic.rs
         assert_eq!(Float::asinh(Df64::ZERO), Df64::ZERO);
 
-        let one = Df64::ONE;
-        let result = Float::asinh(one);
-        // asinh(1) = ln(1 + sqrt(2)) ≈ 0.881373...
+        // asinh(1) = ln(1 + sqrt(2))
         let sqrt2 = Float::sqrt(Df64::from(2.0));
-        let expected = Float::ln(one + sqrt2);
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        let expected = Float::ln(Df64::ONE + sqrt2);
+        assert_ulps_eq!(Float::asinh(Df64::ONE), expected);
 
-        // Test negative values (asinh is odd function)
-        let result = Float::asinh(-one);
-        assert!(Float::abs(result + expected).hi < 1e-30);
+        // asinh is odd function
+        assert_ulps_eq!(Float::asinh(-Df64::ONE), -expected);
     }
 
     #[test]
     fn test_float_acosh()
     {
-        let one = Df64::ONE;
-        let zero = Df64::ZERO;
-        assert_eq!(Float::acosh(one), zero);
+        // Delegate to hyperbolic::acosh, detailed precision tests are in hyperbolic.rs
+        assert_eq!(Float::acosh(Df64::ONE), Df64::ZERO);
 
-        let two = Df64::from(2.0);
-        let result = Float::acosh(two);
-        // acosh(2) = ln(2 + sqrt(3)) ≈ 1.316957...
+        // acosh(2) = ln(2 + sqrt(3))
         let sqrt3 = Float::sqrt(Df64::from(3.0));
-        let expected = Float::ln(two + sqrt3);
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        let expected = Float::ln(Df64::from(2.0) + sqrt3);
+        assert_ulps_eq!(Float::acosh(Df64::from(2.0)), expected);
     }
 
     #[test]
     fn test_float_atanh()
     {
-        let zero = Df64::ZERO;
-        assert_eq!(Float::atanh(zero), zero);
+        // Delegate to hyperbolic::atanh, detailed precision tests are in hyperbolic.rs
+        assert_eq!(Float::atanh(Df64::ZERO), Df64::ZERO);
 
-        let half = Df64::from(0.5);
-        let result = Float::atanh(half);
-        // atanh(0.5) = 0.5 * ln(3) ≈ 0.549306...
-        let ln3 = Float::ln(Df64::from(3.0));
-        let expected = Df64::from(0.5) * ln3;
-        assert!(Float::abs(result - expected).hi < 1e-30);
+        // atanh(0.5) = 0.5 * ln(3)
+        let expected = Df64::from(0.5) * Float::ln(Df64::from(3.0));
+        assert_ulps_eq!(Float::atanh(Df64::from(0.5)), expected);
 
-        // Test negative values (atanh is odd function)
-        let result = Float::atanh(-half);
-        assert!(Float::abs(result + expected).hi < 1e-30);
+        // atanh is odd function
+        assert_ulps_eq!(Float::atanh(Df64::from(-0.5)), -expected);
     }
 
     // ===== Float trait angle conversion (2 methods) =====
@@ -2122,40 +1947,21 @@ mod test
     #[test]
     fn test_float_to_degrees()
     {
-        let pi = crate::consts::PI;
-        let result = Float::to_degrees(pi);
-        assert!(Float::abs(result - Df64::from(180.0)).hi < 1e-29);
-
-        let half_pi = crate::consts::PI_HALF;
-        let result = Float::to_degrees(half_pi);
-        assert!(Float::abs(result - Df64::from(90.0)).hi < 1e-30);
-
-        let zero = Df64::ZERO;
-        assert_eq!(Float::to_degrees(zero), zero);
-
-        // Test negative values
-        let result = Float::to_degrees(-pi);
-        assert!(Float::abs(result - Df64::from(-180.0)).hi < 1e-29);
+        // Uses precomputed DEGREES_PER_RADIAN constant
+        assert_eq!(Float::to_degrees(Df64::ZERO), Df64::ZERO);
+        assert_ulps_eq!(Float::to_degrees(crate::consts::PI), Df64::from(180.0));
+        assert_ulps_eq!(Float::to_degrees(crate::consts::PI_HALF), Df64::from(90.0));
+        assert_ulps_eq!(Float::to_degrees(-crate::consts::PI), Df64::from(-180.0));
     }
 
     #[test]
     fn test_float_to_radians()
     {
-        let deg180 = Df64::from(180.0);
-        let result = Float::to_radians(deg180);
-        assert!(Float::abs(result - crate::consts::PI).hi < 1e-30);
-
-        let deg90 = Df64::from(90.0);
-        let result = Float::to_radians(deg90);
-        assert!(Float::abs(result - crate::consts::PI_HALF).hi < 1e-30);
-
-        let zero = Df64::ZERO;
-        assert_eq!(Float::to_radians(zero), zero);
-
-        // Test negative values
-        let deg_neg180 = Df64::from(-180.0);
-        let result = Float::to_radians(deg_neg180);
-        assert!(Float::abs(result + crate::consts::PI).hi < 1e-30);
+        // Uses precomputed RADIANS_PER_DEGREE constant
+        assert_eq!(Float::to_radians(Df64::ZERO), Df64::ZERO);
+        assert_ulps_eq!(Float::to_radians(Df64::from(180.0)), crate::consts::PI);
+        assert_ulps_eq!(Float::to_radians(Df64::from(90.0)), crate::consts::PI_HALF);
+        assert_ulps_eq!(Float::to_radians(Df64::from(-180.0)), -crate::consts::PI);
     }
 
     // ===== Float trait special constants (2 methods) =====
