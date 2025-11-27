@@ -446,11 +446,7 @@ impl num_traits::Float for Df64 {
 
     #[inline(always)]
     fn mul_add(self, a: Self, b: Self) -> Self {
-        // There are two requirements that one has with fma: (1) it must be
-        // accurate without intermediate rounding and (2) it must be at least
-        // as fast as (a*b)+c. We have no way of satisfying both, so we go
-        // for performance.
-        (self * a) + b
+        arith::mul_add_qq(self, a, b)
     }
 
     #[inline(always)]
@@ -610,12 +606,12 @@ impl num_traits::Float for Df64 {
 
     #[inline(always)]
     fn to_degrees(self) -> Self {
-        self * consts::ONE_OVER_PI * <Df64 as From<f64>>::from(180.0)
+        arith::mul_qq(self, consts::DEGREES_PER_RADIAN)
     }
 
     #[inline(always)]
     fn to_radians(self) -> Self {
-        self * consts::PI / <Df64 as From<f64>>::from(180.0)
+        arith::mul_qq(self, consts::RADIANS_PER_DEGREE)
     }
 
     // ===== Not yet implemented (2 methods) =====
@@ -758,11 +754,7 @@ impl ComplexField for Df64 {
 
     #[inline]
     fn mul_add(self, a: Self, b: Self) -> Self {
-        // There are two requirements that one has with fma: (1) it must be
-        // accurate without intermediate rounding and (2) it must be at least
-        // as fast as (a*b)+c. We have no way of satisfying both, so we go
-        // for performance.
-        return (self * a) + b;
+        arith::mul_add_qq(self, a, b)
     }
 
     #[inline(always)]

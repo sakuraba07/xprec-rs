@@ -372,6 +372,17 @@ pub fn square_q(x: Df64) -> Df64
     return addfast_dd(y.hi, y_lo);
 }
 
+/// Fused multiply-add for Df64: computes (x * y) + z
+///
+/// Note: There are two requirements for fma: (1) it must be accurate without
+/// intermediate rounding and (2) it must be at least as fast as (x*y)+z.
+/// For double-double, we cannot satisfy both, so we prioritize performance.
+#[inline(always)]
+pub fn mul_add_qq(x: Df64, y: Df64, z: Df64) -> Df64
+{
+    add_qq(mul_qq(x, y), z)
+}
+
 // ---------------------------------------------------------------------------
 // UNIT TESTS
 
