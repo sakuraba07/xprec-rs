@@ -374,6 +374,11 @@ impl num_traits::Float for Df64 {
     }
 
     #[inline(always)]
+    fn is_subnormal(self) -> bool {
+        checks::is_subnormal(self)
+    }
+
+    #[inline(always)]
     fn classify(self) -> std::num::FpCategory {
         checks::classify(self)
     }
@@ -457,6 +462,11 @@ impl num_traits::Float for Df64 {
     #[inline(always)]
     fn max(self, other: Self) -> Self {
         funcs::max(self, other)
+    }
+
+    #[inline(always)]
+    fn clamp(self, min: Self, max: Self) -> Self {
+        funcs::clamp(self, min, max)
     }
 
     #[inline(always)]
@@ -1207,6 +1217,22 @@ mod test
     }
 
     #[test]
+    fn test_float_is_subnormal()
+    {
+        // Normal values are not subnormal
+        assert!(!Df64::ONE.is_subnormal());
+        assert!(!Df64::from(2.5).is_subnormal());
+        assert!(!Df64::ZERO.is_subnormal());
+        assert!(!<Df64 as Float>::infinity().is_subnormal());
+        assert!(!<Df64 as Float>::nan().is_subnormal());
+        assert!(!Df64::MIN_POSITIVE.is_subnormal());
+
+        // Values smaller than MIN_POSITIVE are subnormal
+        let subnormal = Df64::MIN_POSITIVE * Df64::from(0.5);
+        assert!(subnormal.is_subnormal());
+    }
+
+    #[test]
     fn test_float_classify()
     {
         assert_eq!(<Df64 as Float>::nan().classify(), FpCategory::Nan);
@@ -1501,6 +1527,26 @@ mod test
 
         let result = Float::copysign(neg_zero, one);
         assert!(result.hi.is_sign_positive());
+    }
+
+    #[test]
+    fn test_float_clamp()
+    {
+        let min = Df64::from(2.0);
+        let max = Df64::from(5.0);
+
+        // Value below min should clamp to min
+        assert_eq!(Float::clamp(Df64::from(1.0), min, max), min);
+
+        // Value above max should clamp to max
+        assert_eq!(Float::clamp(Df64::from(10.0), min, max), max);
+
+        // Value within range should stay unchanged
+        assert_eq!(Float::clamp(Df64::from(3.0), min, max), Df64::from(3.0));
+
+        // Value at boundaries
+        assert_eq!(Float::clamp(min, min, max), min);
+        assert_eq!(Float::clamp(max, min, max), max);
     }
 
     #[test]
