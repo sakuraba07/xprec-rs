@@ -351,7 +351,7 @@ impl num_traits::Float for Df64 {
         Df64::EPSILON
     }
 
-    // ===== Classification methods (7 methods) =====
+    // ===== Classification methods (8 methods) =====
 
     #[inline(always)]
     fn is_nan(self) -> bool {
@@ -393,7 +393,7 @@ impl num_traits::Float for Df64 {
         checks::is_sign_negative(self)
     }
 
-    // ===== Basic arithmetic (5 methods) =====
+    // ===== Basic arithmetic (3 methods) =====
 
     #[inline(always)]
     fn abs(self) -> Self {
@@ -437,7 +437,7 @@ impl num_traits::Float for Df64 {
         funcs::fract(self)
     }
 
-    // ===== Comparison methods (5 methods) =====
+    // ===== Comparison methods (6 methods) =====
 
     #[inline(always)]
     fn abs_sub(self, other: Self) -> Self {
@@ -538,7 +538,7 @@ impl num_traits::Float for Df64 {
         exp::log1p(self)
     }
 
-    // ===== Trigonometric functions (7 methods) =====
+    // ===== Trigonometric functions (8 methods) =====
 
     #[inline(always)]
     fn sin(self) -> Self {
@@ -1173,7 +1173,7 @@ mod test
         assert_ne!(one + eps, one);
     }
 
-    // ===== Float trait classification methods (7 methods) =====
+    // ===== Float trait classification methods (8 methods) =====
 
     #[test]
     fn test_float_is_nan()
@@ -1264,7 +1264,7 @@ mod test
         assert!(neg_zero.is_sign_negative());
     }
 
-    // ===== Float trait basic arithmetic (5 methods) =====
+    // ===== Float trait basic arithmetic (3 methods) =====
 
     #[test]
     fn test_float_abs()
@@ -1327,43 +1327,6 @@ mod test
         let recip_neg = Float::recip(neg_zero);
         assert!(recip_pos.is_nan());
         assert!(recip_neg.is_nan());
-    }
-
-    #[test]
-    fn test_float_powi()
-    {
-        // Delegate to exp::powi, detailed precision tests are in exp.rs
-        // Here we verify the Float trait correctly delegates
-        let two = Df64::from(2.0);
-        assert_eq!(Float::powi(two, 0), Df64::ONE);
-        assert_ulps_eq!(Float::powi(two, 1), two);
-        assert_ulps_eq!(Float::powi(two, 2), Df64::from(4.0));
-        assert_ulps_eq!(Float::powi(two, 3), Df64::from(8.0));
-        assert_ulps_eq!(Float::powi(two, -1), Df64::from(0.5));
-        assert_ulps_eq!(Float::powi(Df64::from(3.0), 4), Df64::from(81.0));
-
-        // Signed zero: 0^n returns NaN in current implementation
-        // (uses exp(n*log(x)) which produces NaN for log(0))
-        let pos_zero = Df64::ZERO;
-        assert!(Float::powi(pos_zero, 0).is_nan());
-        assert!(Float::powi(pos_zero, 2).is_nan());
-        assert!(Float::powi(pos_zero, -2).is_nan());
-    }
-
-    #[test]
-    fn test_float_powf()
-    {
-        // Delegate to exp::powf, detailed precision tests are in exp.rs
-        let two = Df64::from(2.0);
-        let three = Df64::from(3.0);
-
-        assert_ulps_eq!(Float::powf(two, three), Df64::from(8.0));
-        assert_ulps_eq!(Float::powf(Df64::from(4.0), Df64::from(0.5)), Df64::from(2.0));
-
-        // Signed zero: powf with zero base returns NaN due to log(0) = -inf
-        let pos_zero = Df64::ZERO;
-        let result = Float::powf(pos_zero, two);
-        assert!(result.is_nan());
     }
 
     // ===== Float trait rounding methods (5 methods) =====
@@ -1452,7 +1415,7 @@ mod test
         assert_eq!(Float::fract(neg_zero), Df64::ZERO);
     }
 
-    // ===== Float trait comparison methods (5 methods) =====
+    // ===== Float trait comparison methods (6 methods) =====
 
     #[test]
     fn test_float_min()
@@ -1631,6 +1594,43 @@ mod test
     // ===== Float trait exponential and logarithmic (11 methods) =====
 
     #[test]
+    fn test_float_powi()
+    {
+        // Delegate to exp::powi, detailed precision tests are in exp.rs
+        // Here we verify the Float trait correctly delegates
+        let two = Df64::from(2.0);
+        assert_eq!(Float::powi(two, 0), Df64::ONE);
+        assert_ulps_eq!(Float::powi(two, 1), two);
+        assert_ulps_eq!(Float::powi(two, 2), Df64::from(4.0));
+        assert_ulps_eq!(Float::powi(two, 3), Df64::from(8.0));
+        assert_ulps_eq!(Float::powi(two, -1), Df64::from(0.5));
+        assert_ulps_eq!(Float::powi(Df64::from(3.0), 4), Df64::from(81.0));
+
+        // Signed zero: 0^n returns NaN in current implementation
+        // (uses exp(n*log(x)) which produces NaN for log(0))
+        let pos_zero = Df64::ZERO;
+        assert!(Float::powi(pos_zero, 0).is_nan());
+        assert!(Float::powi(pos_zero, 2).is_nan());
+        assert!(Float::powi(pos_zero, -2).is_nan());
+    }
+
+    #[test]
+    fn test_float_powf()
+    {
+        // Delegate to exp::powf, detailed precision tests are in exp.rs
+        let two = Df64::from(2.0);
+        let three = Df64::from(3.0);
+
+        assert_ulps_eq!(Float::powf(two, three), Df64::from(8.0));
+        assert_ulps_eq!(Float::powf(Df64::from(4.0), Df64::from(0.5)), Df64::from(2.0));
+
+        // Signed zero: powf with zero base returns NaN due to log(0) = -inf
+        let pos_zero = Df64::ZERO;
+        let result = Float::powf(pos_zero, two);
+        assert!(result.is_nan());
+    }
+
+    #[test]
     fn test_float_exp()
     {
         // Delegate to exp::exp, detailed precision tests are in exp.rs
@@ -1759,7 +1759,7 @@ mod test
         assert_eq!(Float::hypot(Df64::from(5.0), Df64::ZERO), Df64::from(5.0));
     }
 
-    // ===== Float trait trigonometric functions (7 methods) =====
+    // ===== Float trait trigonometric functions (8 methods) =====
 
     #[test]
     fn test_float_sin()
@@ -2010,7 +2010,7 @@ mod test
         assert_ulps_eq!(Float::to_radians(Df64::from(-180.0)), -crate::consts::PI);
     }
 
-    // ===== Float trait special constants (2 methods) =====
+    // ===== Float trait not yet implemented (2 methods) =====
 
     #[test]
     fn test_float_constants_methods()
