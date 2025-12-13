@@ -119,6 +119,12 @@ pub const LN_2: Df64 = Df64 {hi: 0.6931471805599453, lo: 2.3190468138462996e-17}
 /// Natural logarithm of 10
 pub const LN_10: Df64 = Df64 {hi: 2.302585092994046, lo: -2.1707562233822494e-16};
 
+/// Radians per degree (π/180)
+pub const RADIANS_PER_DEGREE: Df64 = Df64 {hi: 0.017453292519943295, lo: 2.9486522708701687e-19};
+
+/// Degrees per radian (180/π)
+pub const DEGREES_PER_RADIAN: Df64 = Df64 {hi: 57.29577951308232, lo: -1.9878495670576283e-15};
+
 
 #[cfg(test)]
 mod test
@@ -144,5 +150,7 @@ mod test
         assert_ulps_eq!(LOG2_E, arith::reciprocal_q(LN_2));
         assert_ulps_eq!(LOG10_E, arith::reciprocal_q(LN_10));
         assert_ulps_eq!(exp::exp(Df64::ONE), EULER_E);
+        assert_ulps_eq!(RADIANS_PER_DEGREE, arith::div_qd(PI, 180.0));
+        assert_ulps_eq!(DEGREES_PER_RADIAN, arith::mul_qd(ONE_OVER_PI, 180.0));
     }
 }
