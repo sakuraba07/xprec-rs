@@ -302,6 +302,106 @@ impl Signed for Df64 {
     }
 }
 
+/// Implementation of the `num_traits::FloatConst` trait for `Df64`.
+///
+/// This provides standard mathematical constants in double-double precision.
+impl num_traits::FloatConst for Df64 {
+    #[inline(always)]
+    fn E() -> Self {
+        consts::EULER_E
+    }
+
+    #[inline(always)]
+    fn FRAC_1_PI() -> Self {
+        consts::ONE_OVER_PI
+    }
+
+    #[inline(always)]
+    fn FRAC_1_SQRT_2() -> Self {
+        consts::FRAC_1_SQRT_2
+    }
+
+    #[inline(always)]
+    fn FRAC_2_PI() -> Self {
+        consts::TWO_OVER_PI
+    }
+
+    #[inline(always)]
+    fn FRAC_2_SQRT_PI() -> Self {
+        consts::TWO_OVER_SQRT_PI
+    }
+
+    #[inline(always)]
+    fn FRAC_PI_2() -> Self {
+        consts::PI_HALF
+    }
+
+    #[inline(always)]
+    fn FRAC_PI_3() -> Self {
+        consts::PI_THIRD
+    }
+
+    #[inline(always)]
+    fn FRAC_PI_4() -> Self {
+        consts::PI_FOURTH
+    }
+
+    #[inline(always)]
+    fn FRAC_PI_6() -> Self {
+        consts::PI_SIXTH
+    }
+
+    #[inline(always)]
+    fn FRAC_PI_8() -> Self {
+        consts::PI_EIGHTH
+    }
+
+    #[inline(always)]
+    fn LN_10() -> Self {
+        consts::LN_10
+    }
+
+    #[inline(always)]
+    fn LN_2() -> Self {
+        consts::LN_2
+    }
+
+    #[inline(always)]
+    fn LOG10_E() -> Self {
+        consts::LOG10_E
+    }
+
+    #[inline(always)]
+    fn LOG2_E() -> Self {
+        consts::LOG2_E
+    }
+
+    #[inline(always)]
+    fn PI() -> Self {
+        consts::PI
+    }
+
+    #[inline(always)]
+    fn SQRT_2() -> Self {
+        consts::SQRT_2
+    }
+
+    #[inline(always)]
+    fn TAU() -> Self {
+        consts::TWO_PI
+    }
+
+    #[inline(always)]
+    fn LOG10_2() -> Self {
+        consts::LOG10_2
+    }
+
+    #[inline(always)]
+    fn LOG2_10() -> Self {
+        consts::LOG2_10
+    }
+}
+
 /// Implementation of the `num_traits::Float` trait for `Df64`.
 ///
 /// This provides standard floating-point operations without depending on
