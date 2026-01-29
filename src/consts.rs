@@ -164,8 +164,9 @@ mod test
         assert_ulps_eq!(exp::exp(Df64::ONE), EULER_E);
         assert_ulps_eq!(RADIANS_PER_DEGREE, arith::div_qd(PI, 180.0));
         assert_ulps_eq!(DEGREES_PER_RADIAN, arith::mul_qd(ONE_OVER_PI, 180.0));
-        assert_ulps_eq!(SQRT_2 * SQRT_2, Df64::from(2.0));
-        assert_ulps_eq!(FRAC_1_SQRT_2 * SQRT_2, Df64::ONE);
-        assert_ulps_eq!(LOG10_2 * LOG2_10, Df64::ONE);
+        assert_ulps_eq!(SQRT_2, arith::sqrt_q(Df64::from(2.0)));
+        assert_ulps_eq!(FRAC_1_SQRT_2, roots::inv_sqrt(Df64::from(2.0)));
+        assert_ulps_eq!(LOG10_2, LOG10_E * LN_2);
+        assert_ulps_eq!(LOG2_10, LOG2_E * LN_10);
     }
 }
