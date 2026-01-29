@@ -2110,6 +2110,31 @@ mod test
         assert_ulps_eq!(Float::to_radians(Df64::from(-180.0)), -crate::consts::PI);
     }
 
+    #[test]
+    fn test_float_const()
+    {
+        use num_traits::FloatConst;
+        assert_eq!(Df64::E(), consts::EULER_E);
+        assert_eq!(Df64::FRAC_1_PI(), consts::ONE_OVER_PI);
+        assert_eq!(Df64::FRAC_1_SQRT_2(), consts::FRAC_1_SQRT_2);
+        assert_eq!(Df64::FRAC_2_PI(), consts::TWO_OVER_PI);
+        assert_eq!(Df64::FRAC_2_SQRT_PI(), consts::TWO_OVER_SQRT_PI);
+        assert_eq!(Df64::FRAC_PI_2(), consts::PI_HALF);
+        assert_eq!(Df64::FRAC_PI_3(), consts::PI_THIRD);
+        assert_eq!(Df64::FRAC_PI_4(), consts::PI_FOURTH);
+        assert_eq!(Df64::FRAC_PI_6(), consts::PI_SIXTH);
+        assert_eq!(Df64::FRAC_PI_8(), consts::PI_EIGHTH);
+        assert_eq!(Df64::LN_10(), consts::LN_10);
+        assert_eq!(Df64::LN_2(), consts::LN_2);
+        assert_eq!(Df64::LOG10_E(), consts::LOG10_E);
+        assert_eq!(Df64::LOG2_E(), consts::LOG2_E);
+        assert_eq!(Df64::PI(), consts::PI);
+        assert_eq!(Df64::SQRT_2(), consts::SQRT_2);
+        assert_eq!(Df64::TAU(), consts::TWO_PI);
+        assert_eq!(Df64::LOG10_2(), consts::LOG10_2);
+        assert_eq!(Df64::LOG2_10(), consts::LOG2_10);
+    }
+
     // ===== Float trait not yet implemented (2 methods) =====
 
     #[test]
